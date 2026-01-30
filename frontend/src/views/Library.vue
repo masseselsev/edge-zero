@@ -1,6 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const activeTab = ref('images')
 const images = ref([])
@@ -29,10 +32,23 @@ const uploadFile = ref(null)
 const uploadOsType = ref('DEBIAN')
 const scriptFile = ref(null)
 
-onMounted(() => {
-    fetchImages()
-    fetchScripts()
+const components = ref([])
+const showComponentModal = ref(false)
+const newComponent = ref({
+    name: '',
+    description: '',
+    default_port: ''
 })
+
+const fetchComponents = async () => {
+    try {
+        const res = await axios.get('/api/library/components')
+        components.value = res.data
+    } catch (e) {
+        console.error(e)
+        alert("Fetch error: " + e.message)
+    }
+}
 
 const fetchImages = async () => {
     try {
@@ -52,60 +68,39 @@ const fetchScripts = async () => {
     }
 }
 
-const handleFileUpload = (event) => {
-    uploadFile.value = event.target.files[0]
-}
-
-const handleScriptUpload = (event) => {
-    scriptFile.value = event.target.files[0]
-}
-
-const cancelUpload = () => {
-    if (abortController) {
-        abortController.abort()
-        abortController = null
-        uploading.value = false
-        uploadStats.value = { loaded: 0, total: 0, speed: '', percent: 0 }
-    }
-}
-
 const uploadImage = async () => {
     if (!uploadFile.value) return
-    
     uploading.value = true
-    uploadStats.value = { loaded: 0, total: 0, speed: '0 B/s', percent: 0 }
-    
-    abortController = new AbortController()
-
-    const startTime = Date.now()
     const formData = new FormData()
     formData.append('file', uploadFile.value)
     formData.append('os_type', uploadOsType.value)
     
+    abortController = new AbortController()
+
     try {
         await axios.post('/api/library/images', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
             signal: abortController.signal,
             onUploadProgress: (progressEvent) => {
-                const { loaded, total } = progressEvent
-                const timeElapsed = (Date.now() - startTime) / 1000 // seconds
-                const bps = loaded / timeElapsed
+                const total = progressEvent.total
+                const current = progressEvent.loaded
+                const percent = Math.round((current * 100) / total)
                 
                 uploadStats.value = {
-                    loaded: formatBytes(loaded),
+                    loaded: formatBytes(current),
                     total: formatBytes(total),
-                    speed: `${formatBytes(bps)}/s`,
-                    percent: Math.round((loaded * 100) / total)
+                    percent: percent,
+                    speed: '' // TODO: Calc speed
                 }
             }
         })
         uploadFile.value = null
         await fetchImages()
+        alert("Upload Successful")
     } catch (e) {
         if (axios.isCancel(e)) {
-             console.log("Upload cancelled")
+            alert("Upload Cancelled")
         } else {
-             alert("Upload failed: " + e.response?.data?.detail || e.message)
+            alert("Upload Failed: " + e.message)
         }
     } finally {
         uploading.value = false
@@ -115,49 +110,46 @@ const uploadImage = async () => {
 
 const uploadScript = async () => {
     if (!scriptFile.value) return
-    
     uploading.value = true
-    uploadStats.value = { loaded: 0, total: 0, speed: '0 B/s', percent: 0 }
-     
-    abortController = new AbortController()
-
-    const startTime = Date.now()
     const formData = new FormData()
     formData.append('file', scriptFile.value)
     
+    abortController = new AbortController()
+
     try {
         await axios.post('/api/library/scripts', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
             signal: abortController.signal,
             onUploadProgress: (progressEvent) => {
-                const { loaded, total } = progressEvent
-                const timeElapsed = (Date.now() - startTime) / 1000 // seconds
-                const bps = loaded / timeElapsed
-                
-                uploadStats.value = {
-                    loaded: formatBytes(loaded),
+                 const total = progressEvent.total
+                const current = progressEvent.loaded
+                const percent = Math.round((current * 100) / total)
+                 uploadStats.value = {
+                    loaded: formatBytes(current),
                     total: formatBytes(total),
-                    speed: `${formatBytes(bps)}/s`,
-                    percent: Math.round((loaded * 100) / total)
+                    percent: percent,
+                    speed: '' 
                 }
             }
         })
         scriptFile.value = null
         await fetchScripts()
+        alert("Script Upload Successful")
     } catch (e) {
-         if (axios.isCancel(e)) {
-             console.log("Upload cancelled")
-        } else {
-            alert("Script upload failed: " + e.response?.data?.detail || e.message)
-        }
+        alert("Upload Failed")
     } finally {
         uploading.value = false
+    }
+}
+
+const cancelUpload = () => {
+    if (abortController) {
+        abortController.abort()
         abortController = null
     }
 }
 
 const deleteImage = async (id) => {
-    if (!confirm("Are you sure?")) return
+    if (!confirm("Delete OS Image?")) return
     try {
         await axios.delete(`/api/library/images/${id}`)
         await fetchImages()
@@ -165,6 +157,44 @@ const deleteImage = async (id) => {
         alert("Delete failed")
     }
 }
+
+const handleFileUpload = (event) => {
+    uploadFile.value = event.target.files[0]
+}
+
+const handleScriptUpload = (event) => {
+    scriptFile.value = event.target.files[0]
+}
+
+const createComponent = async () => {
+    try {
+        await axios.post('/api/library/components', newComponent.value)
+        showComponentModal.value = false
+        newComponent.value = { name: '', description: '', default_port: '' }
+        await fetchComponents()
+        alert("Component Created Successfully")
+    } catch (e) {
+        alert("Failed to create component: " + (e.response?.data?.detail || e.message))
+    }
+}
+
+const deleteComponent = async (id) => {
+    if (!confirm("Are you sure?")) return
+    try {
+        await axios.delete(`/api/library/components/${id}`)
+        await fetchComponents()
+    } catch (e) {
+         alert("Delete failed")
+    }
+}
+
+onMounted(() => {
+    fetchImages()
+    fetchScripts()
+    fetchComponents()
+})
+
+// ... other functions ...
 
 const deleteScript = async (id) => {
     if (!confirm("Are you sure?")) return
@@ -177,11 +207,13 @@ const deleteScript = async (id) => {
 }
 </script>
 
+
+
 <template>
   <div>
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-white tracking-tight">Library</h1>
-        <p class="text-slate-400 mt-1">Manage OS images and init scripts.</p>
+        <h1 class="text-3xl font-bold text-white tracking-tight">{{ t('library.title') }}</h1>
+        <p class="text-slate-400 mt-1">{{ t('library.subtitle') }}</p>
     </div>
 
     <!-- Tabs -->
@@ -206,14 +238,14 @@ const deleteScript = async (id) => {
     <div v-if="activeTab === 'images'" class="space-y-6">
         <!-- Upload Form -->
         <div class="glass-panel p-6 rounded-xl">
-            <h3 class="text-lg font-bold text-white mb-4">Upload Image</h3>
+            <h3 class="text-lg font-bold text-white mb-4">{{ t('library.upload_image') }}</h3>
             <div class="flex gap-4 items-end">
                 <div class="flex-1">
-                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">File</label>
+                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('library.file') }}</label>
                     <input type="file" @change="handleFileUpload" class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-700 file:text-white hover:file:bg-slate-600"/>
                 </div>
                  <div>
-                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">Type</label>
+                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('library.type') }}</label>
                     <select v-model="uploadOsType" class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5">
                         <option value="DEBIAN">Debian</option>
                         <option value="UBUNTU">Ubuntu</option>
@@ -225,14 +257,14 @@ const deleteScript = async (id) => {
                         @click="cancelUpload" 
                         class="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/50 px-4 py-2 rounded-lg font-medium transition-colors"
                     >
-                        Cancel
+                        {{ t('library.cancel') }}
                     </button>
                     <button 
                         @click="uploadImage" 
                         :disabled="uploading || !uploadFile"
                         class="bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                     >
-                        {{ uploading ? 'Uploading...' : 'Upload' }}
+                        {{ uploading ? t('library.uploading') : t('library.upload') }}
                     </button>
                 </div>
             </div>
@@ -256,23 +288,23 @@ const deleteScript = async (id) => {
                     <div class="text-xs text-slate-400 mt-1">{{ img.os_type }}</div>
                 </div>
                 <button @click="deleteImage(img.id)" class="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Delete
+                    {{ t('common.delete') }}
                 </button>
             </div>
             <div v-if="images.length === 0" class="text-slate-500 text-sm col-span-full text-center py-8">
-                No images found.
+                {{ t('library.no_images') }}
             </div>
         </div>
     </div>
 
     <!-- Scripts Tab -->
-    <div v-else class="space-y-6">
+    <div v-if="activeTab === 'scripts'" class="space-y-6">
          <!-- Upload Form -->
         <div class="glass-panel p-6 rounded-xl">
-            <h3 class="text-lg font-bold text-white mb-4">Upload Script</h3>
+            <h3 class="text-lg font-bold text-white mb-4">{{ t('library.upload_script') }}</h3>
             <div class="flex gap-4 items-end">
                 <div class="flex-1">
-                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">Script File</label>
+                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('library.file') }}</label>
                     <input type="file" @change="handleScriptUpload" class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-700 file:text-white hover:file:bg-slate-600"/>
                 </div>
                 <div class="flex gap-2">
@@ -281,14 +313,14 @@ const deleteScript = async (id) => {
                         @click="cancelUpload" 
                         class="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/50 px-4 py-2 rounded-lg font-medium transition-colors"
                     >
-                        Cancel
+                        {{ t('library.cancel') }}
                     </button>
                     <button 
                         @click="uploadScript" 
                         :disabled="uploading || !scriptFile"
                         class="bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                     >
-                        {{ uploading ? 'Uploading...' : 'Upload' }}
+                        {{ uploading ? t('library.uploading') : t('library.upload') }}
                     </button>
                 </div>
             </div>
@@ -311,11 +343,11 @@ const deleteScript = async (id) => {
                     <div class="font-bold text-white">{{ script.filename }}</div>
                 </div>
                 <button @click="deleteScript(script.id)" class="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                    Delete
+                    {{ t('common.delete') }}
                 </button>
             </div>
             <div v-if="scripts.length === 0" class="text-slate-500 text-sm col-span-full text-center py-8">
-                No scripts found.
+                {{ t('library.no_scripts') }}
             </div>
         </div>
     </div>

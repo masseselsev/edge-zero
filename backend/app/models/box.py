@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Enum, Text
+from sqlalchemy import Column, String, Enum, Text, Integer, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, INET, MACADDR
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
@@ -20,9 +20,18 @@ class Box(Base):
     mac_address = Column(MACADDR, unique=True, nullable=False)
     ip_address = Column(INET, nullable=True) # Check if static IP is mandatory initially or assigned later. Prompt says "Static IP assigned by us"
     status = Column(Enum(BoxStatus, name="box_status"), default=BoxStatus.NEW)
-    location = Column(String, nullable=True)
+    location_id = Column(UUID(as_uuid=True), ForeignKey("locations.id"), nullable=True)
     notes = Column(Text, nullable=True)
+
+    location_rel = relationship("Location", back_populates="boxes")
+
+    # SSH Configuration
+    ssh_port = Column(Integer, default=2222)
+    ssh_username = Column(String, default="user")
+    ssh_password = Column(String, default="admin")
 
     components = relationship("Component", back_populates="box", cascade="all, delete-orphan")
     port_mappings = relationship("PortMapping", back_populates="box", cascade="all, delete-orphan")
     vpn_credential = relationship("VpnCredential", back_populates="box", uselist=False, cascade="all, delete-orphan")
+    
+    device_groups = relationship("app.models.device_group.DeviceGroup", secondary="box_device_groups", back_populates="boxes")

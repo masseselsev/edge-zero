@@ -5,7 +5,7 @@ import Sidebar from './Sidebar.vue'
 <template>
   <div class="min-h-screen bg-slate-900 text-slate-100">
     <Sidebar />
-    <main class="ml-64 p-8">
+    <main class="ml-48 p-8">
       <slot />
     </main>
   </div>

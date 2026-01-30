@@ -1,0 +1,103 @@
+{
+    "sidebar": {
+        "dashboard": "Дашборд",
+        "inventory": "Инвентарь",
+        "deployment": "Развертывание",
+        "library": "Библиотека",
+        "settings": "Настройки",
+        "vsm2_utility": "Утилита VSM2",
+        "system_status": "Статус системы",
+        "online": "Онлайн",
+        "offline": "Оффлайн"
+    },
+    "inventory": {
+        "title": "Инвентарь",
+        "subtitle": "Управление промышленными устройствами",
+        "sync_pxe": "Синхр. PXE",
+        "import_csv": "Импорт CSV",
+        "add_device": "Добавить устройство",
+        "add_component_type": "Добавить тип компонента",
+        "add_template": "Добавить шаблон",
+        "add_device_group": "Добавить группу устройств",
+        "loading": "Загрузка инвентаря...",
+        "no_devices": "Устройства не найдены. Нажмите \"+ Добавить устройство\".",
+        "search": "Поиск",
+        "tabs": {
+            "devices": "Устройства",
+            "components": "Компоненты",
+            "templates": "Шаблоны",
+            "device_groups": "Теги",
+            "groups": "Группы устройств",
+            "locations": "Локации"
+        },
+        "table": {
+            "status": "Статус",
+            "internal_sn": "Серийный номер",
+            "mac_address": "MAC адрес",
+            "ip_address": "IP адрес",
+            "location": "Локация",
+            "actions": "Действия",
+            "details": "Детали",
+            "delete": "Удалить"
+        }
+    },
+    "settings": {
+        "title": "Настройки",
+        "subtitle": "Конфигурация приложения",
+        "language": "Язык",
+        "select_language": "Выберите язык"
+    },
+    "dashboard": {
+        "title": "Дашборд",
+        "subtitle": "Обзор системы в реальном времени",
+        "total_devices": "Всего устройств",
+        "online": "В сети",
+        "offline": "Оффлайн",
+        "pending_provision": "Ожидают настройки",
+        "active_alerts": "Активные тревоги"
+    },
+    "box_details": {
+        "back": "Назад",
+        "delete_device": "Удалить устройство",
+        "device_info": "Информация об устройстве",
+        "mac_address": "MAC адрес",
+        "ip_address": "IP адрес",
+        "location": "Локация",
+        "tags": "Теги",
+        "ssh_config": "Настройки SSH",
+        "ssh_port": "Порт",
+        "ssh_username": "Имя пользователя",
+        "ssh_password": "Пароль",
+        "id": "ID",
+        "not_assigned": "Не назначен",
+        "unknown": "Неизвестно",
+        "components": "Компоненты",
+        "add_component": "Добавить компонент",
+        "apply_template": "Применить шаблон",
+        "add_tag": "Добавить тег",
+        "no_components": "Компоненты отсутствуют.",
+        "delete_confirm": "Вы уверены, что хотите удалить это устройство?"
+    },
+    "library": {
+        "title": "Библиотека",
+        "subtitle": "Управление образами ОС и скриптами.",
+        "upload_image": "Загрузить образ",
+        "upload_script": "Загрузить скрипт",
+        "file": "Файл",
+        "type": "Тип",
+        "cancel": "Отмена",
+        "upload": "Загрузить",
+        "uploading": "Загрузка...",
+        "no_images": "Образы не найдены.",
+        "no_scripts": "Скрипты не найдены."
+    },
+    "common": {
+        "cancel": "Отмена",
+        "save": "Сохранить",
+        "create": "Создать",
+        "delete": "Удалить",
+        "add": "Добавить",
+        "apply": "Применить",
+        "loading": "Загрузка..."
+    }
+}

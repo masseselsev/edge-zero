@@ -5,21 +5,20 @@ from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 import enum
 
-class ComponentType(str, enum.Enum):
-    CAMERA = "CAMERA"
-    RADAR = "RADAR"
-    GPS = "GPS"
-    VSM_CONTROLLER = "VSM_CONTROLLER"
-    ROUTER = "ROUTER"
-
 class Component(Base):
     __tablename__ = "components"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     box_id = Column(UUID(as_uuid=True), ForeignKey("boxes.id"), nullable=False)
-    type = Column(Enum(ComponentType, name="component_type"), nullable=False)
-    vendor = Column(String, nullable=True)
-    model = Column(String, nullable=True)
-    serial_number = Column(String, nullable=True)
-
+    definition_id = Column(UUID(as_uuid=True), ForeignKey("component_definitions.id"), nullable=False)
+    
+    # Optional overrides or specific info
+    serial_number = Column(String, nullable=True) 
+    # vendor/model are now in definition, but maybe we keep them if they deviate?
+    # For simplicitly, let's rely on definition for static info.
+    # But wait, "component instances" might have specific versions?
+    # The prompt said "contain names, descriptions and default ports".
+    # So the instance is just "I have a VSM2".
+    
     box = relationship("app.models.box.Box", back_populates="components")
+    definition = relationship("app.models.component_definition.ComponentDefinition", back_populates="components")

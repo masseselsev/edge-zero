@@ -10,6 +10,7 @@
     "dependencies": {
         "axios": "^1.6.7",
         "vue": "^3.4.19",
+        "vue-i18n": "^9.10.1",
         "vue-router": "^4.6.4"
     },
     "devDependencies": {

@@ -8,3 +8,5 @@ from app.models.os_image import OsImage  # noqa
 from app.models.system_settings import SystemSettings  # noqa
 from app.models.vpn_credential import VpnCredential  # noqa
 from app.models.init_script import InitScript  # noqa
+from app.models.component_definition import ComponentDefinition  # noqa
+from app.models.location import Location  # noqa

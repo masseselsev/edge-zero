@@ -38,3 +38,22 @@ class SystemSettingCreate(SystemSettingBase):
 
 class SystemSetting(SystemSettingBase):
     model_config = ConfigDict(from_attributes=True)
+
+class ComponentDefinitionBase(BaseModel):
+    name: str
+    description: str | None = None
+    default_port: str | None = None
+    type: str | None = None
+
+class ComponentDefinitionCreate(ComponentDefinitionBase):
+    pass
+
+class ComponentDefinitionUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    default_port: str | None = None
+    type: str | None = None
+
+class ComponentDefinition(ComponentDefinitionBase):
+    id: UUID
+    model_config = ConfigDict(from_attributes=True)

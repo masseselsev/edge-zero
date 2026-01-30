@@ -10,7 +10,12 @@ from app.db.session import get_db
 from app.models.os_image import OsImage as OsImageModel
 from app.models.system_settings import SystemSettings as SystemSettingsModel
 from app.models.init_script import InitScript as InitScriptModel
-from app.schemas.library import OsImage, OsImageCreate, SystemSetting, SystemSettingCreate, OsType, InitScript, InitScriptCreate
+from app.models.component_definition import ComponentDefinition as ComponentDefinitionModel
+from app.schemas.library import (
+    OsImage, OsImageCreate, SystemSetting, SystemSettingCreate, OsType, 
+    InitScript, InitScriptCreate,
+    ComponentDefinition, ComponentDefinitionCreate, ComponentDefinitionUpdate
+)
 
 router = APIRouter()
 
@@ -165,3 +170,116 @@ async def create_or_update_setting(setting: SystemSettingCreate, db: AsyncSessio
         await db.commit()
         await db.refresh(new_setting)
         return new_setting
+
+# --- COMPONENTS DEFINITIONS ---
+
+@router.get("/components", response_model=List[ComponentDefinition])
+async def read_components(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(ComponentDefinitionModel))
+    return result.scalars().all()
+
+@router.post("/components", response_model=ComponentDefinition)
+async def create_component(comp: ComponentDefinitionCreate, db: AsyncSession = Depends(get_db)):
+    # Check if exists by name
+    result = await db.execute(select(ComponentDefinitionModel).where(ComponentDefinitionModel.name == comp.name))
+    if result.scalars().first():
+         raise HTTPException(status_code=400, detail="Component definition with this name already exists")
+
+    db_comp = ComponentDefinitionModel(**comp.model_dump())
+    db.add(db_comp)
+    await db.commit()
+    await db.refresh(db_comp)
+    return db_comp
+
+    return db_comp
+
+@router.put("/components/{comp_id}", response_model=ComponentDefinition)
+async def update_component(comp_id: UUID, comp_in: ComponentDefinitionUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(ComponentDefinitionModel).where(ComponentDefinitionModel.id == comp_id))
+    db_comp = result.scalars().first()
+    if not db_comp:
+        raise HTTPException(status_code=404, detail="Component definition not found")
+    
+    update_data = comp_in.model_dump(exclude_unset=True)
+    
+    # If name is being updated, check uniqueness
+    if "name" in update_data and update_data["name"] != db_comp.name:
+         result = await db.execute(select(ComponentDefinitionModel).where(ComponentDefinitionModel.name == update_data["name"]))
+         if result.scalars().first():
+             raise HTTPException(status_code=400, detail="Component with this name already exists")
+
+    for field, value in update_data.items():
+        setattr(db_comp, field, value)
+
+    db.add(db_comp)
+    await db.commit()
+    await db.refresh(db_comp)
+    return db_comp
+
+@router.delete("/components/{comp_id}")
+async def delete_component(comp_id: UUID, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(ComponentDefinitionModel).where(ComponentDefinitionModel.id == comp_id))
+    comp = result.scalars().first()
+    if not comp:
+        raise HTTPException(status_code=404, detail="Component definition not found")
+    
+    await db.delete(comp)
+    await db.commit()
+    return {"status": "deleted"}
+
+# --- COMPONENT GROUPS ---
+
+from app.models.component_group import ComponentGroup as ComponentGroupModel, ComponentGroupItem as ComponentGroupItemModel
+from app.schemas.group import ComponentGroup, ComponentGroupCreate
+from sqlalchemy.orm import selectinload
+
+@router.get("/groups", response_model=List[ComponentGroup])
+async def read_groups(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(ComponentGroupModel)
+        .options(selectinload(ComponentGroupModel.items))
+    )
+    return result.scalars().all()
+
+@router.post("/groups", response_model=ComponentGroup)
+async def create_group(group: ComponentGroupCreate, db: AsyncSession = Depends(get_db)):
+    # Check if exists
+    result = await db.execute(select(ComponentGroupModel).where(ComponentGroupModel.name == group.name))
+    if result.scalars().first():
+        raise HTTPException(status_code=400, detail="Group with this name already exists")
+    
+    # Create group
+    db_group = ComponentGroupModel(name=group.name, description=group.description)
+    db.add(db_group)
+    
+    # Add items
+    for item in group.items:
+        db_item = ComponentGroupItemModel(
+            group=db_group, # Will be handled by session flush usually, but relationship works
+            definition_id=item.definition_id,
+            count=item.count
+        )
+        db_group.items.append(db_item)
+    
+    db.add(db_group)
+    await db.commit()
+    await db.refresh(db_group)
+    
+    # Reload for response
+    result = await db.execute(
+        select(ComponentGroupModel)
+        .options(selectinload(ComponentGroupModel.items))
+        .where(ComponentGroupModel.id == db_group.id)
+    )
+    return result.scalars().first()
+
+@router.delete("/groups/{group_id}")
+async def delete_group(group_id: UUID, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(ComponentGroupModel).where(ComponentGroupModel.id == group_id))
+    group = result.scalars().first()
+    if not group:
+         raise HTTPException(status_code=404, detail="Group not found")
+    
+    await db.delete(group) # Cascade should handle items
+    await db.commit()
+    return {"status": "deleted"}
