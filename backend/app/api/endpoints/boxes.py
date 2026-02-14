@@ -338,11 +338,16 @@ async def batch_delete_boxes(box_ids: List[UUID] = Body(...), db: AsyncSession =
     if not box_ids:
         return {"deleted": 0}
         
-    stmt = delete(BoxModel).where(BoxModel.id.in_(box_ids))
+    stmt = select(BoxModel).where(BoxModel.id.in_(box_ids))
     result = await db.execute(stmt)
+    boxes = result.scalars().all()
+    
+    for box in boxes:
+        await db.delete(box)
+        
     await db.commit()
     
-    return {"status": "success", "deleted": result.rowcount}
+    return {"status": "success", "deleted": len(boxes)}
 
 @router.post("/batch/apply-tag/{group_id}")
 async def batch_apply_tag(group_id: UUID, box_ids: List[UUID] = Body(...), db: AsyncSession = Depends(get_db)):

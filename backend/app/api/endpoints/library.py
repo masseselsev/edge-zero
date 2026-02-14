@@ -38,7 +38,7 @@ async def read_images(db: AsyncSession = Depends(get_db)):
 @router.post("/images", response_model=OsImage)
 async def upload_image(
     file: UploadFile = File(...),
-    os_type: OsType = Form(...),
+    os_type: OsType = Form(OsType.DEBIAN),
     is_active: bool = Form(False),
     db: AsyncSession = Depends(get_db)
 ):

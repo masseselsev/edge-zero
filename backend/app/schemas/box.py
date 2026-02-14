@@ -20,7 +20,7 @@ class BoxBase(BaseModel):
     ip_address: Optional[Union[str, IPv4Address, IPv6Address]] = None
     status: BoxStatus = BoxStatus.NEW
     location_id: Optional[UUID] = None
-    location: Optional[Location] = None
+
     notes: Optional[str] = None
     ssh_port: int = 2222
     ssh_username: str = "user"
@@ -74,5 +74,6 @@ class Component(ComponentBase):
 class Box(BoxBase):
     id: UUID
     components: List[Component] = []
+    location: Optional[Location] = None
     
     model_config = ConfigDict(from_attributes=True)

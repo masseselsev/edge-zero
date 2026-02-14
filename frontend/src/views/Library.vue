@@ -29,7 +29,6 @@ const formatBytes = (bytes, decimals = 2) => {
 
 // Forms
 const uploadFile = ref(null)
-const uploadOsType = ref('DEBIAN')
 const scriptFile = ref(null)
 
 const components = ref([])
@@ -73,7 +72,7 @@ const uploadImage = async () => {
     uploading.value = true
     const formData = new FormData()
     formData.append('file', uploadFile.value)
-    formData.append('os_type', uploadOsType.value)
+
     
     abortController = new AbortController()
 
@@ -244,13 +243,7 @@ const deleteScript = async (id) => {
                     <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('library.file') }}</label>
                     <input type="file" @change="handleFileUpload" class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-slate-700 file:text-white hover:file:bg-slate-600"/>
                 </div>
-                 <div>
-                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('library.type') }}</label>
-                    <select v-model="uploadOsType" class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5">
-                        <option value="DEBIAN">Debian</option>
-                        <option value="UBUNTU">Ubuntu</option>
-                    </select>
-                </div>
+
                 <div class="flex gap-2">
                     <button 
                         v-if="uploading"

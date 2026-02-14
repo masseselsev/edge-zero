@@ -29,6 +29,33 @@ def upgrade() -> None:
     )
     op.add_column('boxes', sa.Column('location_id', sa.UUID(), nullable=True))
     op.create_foreign_key(None, 'boxes', 'locations', ['location_id'], ['id'])
+    
+    # --- Custom Data Migration ---
+    import uuid
+    bind = op.get_bind()
+    # Select distinct legacy locations
+    # Use text() for raw SQL
+    results = bind.execute(sa.text("SELECT DISTINCT location FROM boxes WHERE location IS NOT NULL")).fetchall()
+    
+    for r in results:
+        loc_name = r[0]
+        if not loc_name: continue
+        
+        loc_id = str(uuid.uuid4())
+        
+        # Insert into locations table
+        bind.execute(
+            sa.text("INSERT INTO locations (id, name) VALUES (:id, :name)"),
+            {"id": loc_id, "name": loc_name}
+        )
+        
+        # Update boxes to reference new location_id
+        bind.execute(
+            sa.text("UPDATE boxes SET location_id = :loc_id WHERE location = :loc_name"),
+            {"loc_id": loc_id, "loc_name": loc_name}
+        )
+    # -----------------------------
+
     op.drop_column('boxes', 'location')
     # ### end Alembic commands ###
 

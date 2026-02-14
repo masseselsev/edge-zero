@@ -127,7 +127,9 @@ const addDeviceGroup = async () => {
         const res = await axios.get(`/api/boxes/${box.value.id}`)
         box.value = res.data
     } catch (e) {
-        alert("Failed to add group: " + (e.response?.data?.detail || e.message))
+        const detail = e.response?.data?.detail
+        const errMsg = typeof detail === 'object' ? JSON.stringify(detail) : (detail || e.message)
+        alert("Failed to add group: " + errMsg)
     }
 }
 
@@ -141,6 +143,37 @@ const provisionBox = async () => {
         alert("Provisioning started")
     } catch (e) {
         alert("Provisioning failed")
+    }
+}
+
+const showEditDeviceModal = ref(false)
+const editDeviceData = ref({})
+
+const openEditModal = () => {
+    editDeviceData.value = {
+        internal_sn: box.value.internal_sn,
+        mac_address: box.value.mac_address,
+        location_id: box.value.location_id,
+        notes: box.value.notes,
+        ssh_port: box.value.ssh_port,
+        ssh_username: box.value.ssh_username,
+        ssh_password: box.value.ssh_password,
+    }
+    showEditDeviceModal.value = true
+}
+
+const saveDeviceChanges = async () => {
+    try {
+        await axios.put(`/api/boxes/${box.value.id}`, editDeviceData.value)
+        // Refresh
+        const res = await axios.get(`/api/boxes/${box.value.id}`)
+        box.value = res.data
+        showEditDeviceModal.value = false
+        alert("Device updated successfully")
+    } catch (e) {
+        const detail = e.response?.data?.detail
+        const errMsg = typeof detail === 'object' ? JSON.stringify(detail) : (detail || e.message)
+        alert("Failed to update device: " + errMsg)
     }
 }
 
@@ -220,6 +253,9 @@ const getStatusColor = (status) => {
             </h1>
         </div>
         <div class="flex gap-2">
+            <button @click="openEditModal" class="text-slate-400 hover:text-white font-medium px-4 py-2 rounded-lg border border-slate-600 bg-slate-800 transition-colors">
+                Edit
+            </button>
             <button @click="provisionBox" class="text-blue-400 hover:text-blue-300 font-medium px-4 py-2 rounded-lg border border-blue-500/30 bg-blue-500/10 transition-colors">
                 Provision
             </button>
@@ -360,16 +396,16 @@ const getStatusColor = (status) => {
     <!-- Apply Template Modal -->
     <div v-if="showTemplateModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
         <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 w-full max-w-md shadow-2xl">
-            <h3 class="text-xl font-bold text-white mb-6">Apply Component Template</h3>
-            <p class="text-slate-400 text-sm mb-4">Select a template to bulk-add components to this device.</p>
+            <h3 class="text-xl font-bold text-white mb-6">{{ t('box_details.apply_template_title') }}</h3>
+            <p class="text-slate-400 text-sm mb-4">{{ t('box_details.apply_template_desc') }}</p>
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">Template <span class="text-red-500">*</span></label>
+                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('box_details.template_label') }} <span class="text-red-500">*</span></label>
                     <select v-model="selectedTemplate" 
                         class="bg-slate-800 border text-white text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5 transition-colors"
                         :class="!selectedTemplate ? 'border-red-500/50' : 'border-slate-700'">
-                        <option value="" disabled>Select Template</option>
+                        <option value="" disabled>{{ t('box_details.select_template') }}</option>
                         <option v-for="tmpl in templates" :key="tmpl.id" :value="tmpl.id">
                             {{ tmpl.name }} ({{ tmpl.items.length }} items)
                         </option>
@@ -379,10 +415,10 @@ const getStatusColor = (status) => {
 
             <div class="flex justify-end gap-3 mt-8">
                 <button @click="showTemplateModal = false" class="text-slate-400 hover:text-white font-medium px-4 py-2 transition-colors">
-                    Cancel
+                    {{ t('common.cancel') }}
                 </button>
                 <button @click="applyTemplate" :disabled="!selectedTemplate" class="bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors">
-                     Apply
+                     {{ t('common.apply') }}
                 </button>
             </div>
         </div>
@@ -390,15 +426,15 @@ const getStatusColor = (status) => {
     <!-- Add Tag Modal -->
     <div v-if="showDeviceGroupModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
         <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 w-full max-w-md shadow-2xl">
-            <h3 class="text-xl font-bold text-white mb-6">Add Device Tag</h3>
+            <h3 class="text-xl font-bold text-white mb-6">{{ t('box_details.add_tag_title') }}</h3>
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">Tag (Group) <span class="text-red-500">*</span></label>
+                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('box_details.tag_label') }} <span class="text-red-500">*</span></label>
                     <select v-model="selectedDeviceGroup" 
                         class="bg-slate-800 border text-white text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5 transition-colors"
                         :class="!selectedDeviceGroup ? 'border-red-500/50' : 'border-slate-700'">
-                        <option value="" disabled>Select Tag</option>
+                        <option value="" disabled>{{ t('box_details.select_tag') }}</option>
                         <option v-for="grp in availableDeviceGroups" :key="grp.id" :value="grp.id">
                             {{ grp.name }}
                         </option>
@@ -408,13 +444,82 @@ const getStatusColor = (status) => {
 
             <div class="flex justify-end gap-3 mt-8">
                 <button @click="showDeviceGroupModal = false" class="text-slate-400 hover:text-white font-medium px-4 py-2 transition-colors">
-                    Cancel
+                    {{ t('common.cancel') }}
                 </button>
                 <button @click="addDeviceGroup" :disabled="!selectedDeviceGroup" class="bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors">
-                     Add Tag
+                     {{ t('box_details.add_tag') }}
                 </button>
             </div>
         </div>
     </div>
-  </div>
+    </div>
+    
+    <!-- Edit Device Modal -->
+    <div v-if="showEditDeviceModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 w-full max-w-2xl shadow-2xl">
+            <h3 class="text-xl font-bold text-white mb-6">Edit Device</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left Column: Identity -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('inventory.table.internal_sn') }} / Hostname</label>
+                        <input v-model="editDeviceData.internal_sn" type="text" 
+                            class="w-full bg-slate-800 border rounded-lg px-4 py-2 text-white focus:ring-brand-500 focus:border-brand-500 outline-none transition-colors border-slate-600" />
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('inventory.table.mac_address') }}</label>
+                        <input v-model="editDeviceData.mac_address" type="text" 
+                            class="w-full bg-slate-800 border rounded-lg px-4 py-2 text-white focus:ring-brand-500 focus:border-brand-500 outline-none transition-colors border-slate-600" />
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('inventory.table.location') }}</label>
+                        <select v-model="editDeviceData.location_id" 
+                            class="bg-slate-800 border text-white text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5 transition-colors border-slate-600">
+                            <option value="">{{ t('inventory.modal.select_location') }}</option>
+                            <option v-for="loc in locations" :key="loc.id" :value="loc.id">
+                                {{ loc.name }}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Right Column: Config -->
+                <div class="space-y-4">
+                    <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-3">{{ t('box_details.ssh_config') }}</h4>
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">{{ t('box_details.ssh_port') }}</label>
+                                    <input v-model="editDeviceData.ssh_port" type="number" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-sm text-white focus:ring-brand-500 focus:border-brand-500 outline-none" />
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">{{ t('box_details.ssh_username') }}</label>
+                                    <input v-model="editDeviceData.ssh_username" type="text" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-sm text-white focus:ring-brand-500 focus:border-brand-500 outline-none" />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">{{ t('box_details.ssh_password') }}</label>
+                                <input v-model="editDeviceData.ssh_password" type="text" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-sm text-white focus:ring-brand-500 focus:border-brand-500 outline-none" />
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('inventory.modal.notes') }}</label>
+                        <textarea v-model="editDeviceData.notes" rows="4" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-brand-500 focus:border-brand-500 outline-none resize-none"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-700">
+                <button @click="showEditDeviceModal = false" class="text-slate-400 hover:text-white font-medium px-4 py-2 transition-colors">
+                    {{ t('common.cancel') }}
+                </button>
+                <button @click="saveDeviceChanges" class="bg-brand-600 hover:bg-brand-500 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                    {{ t('common.save') }}
+                </button>
+            </div>
+        </div>
+    </div>
 </template>

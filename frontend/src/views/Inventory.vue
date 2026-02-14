@@ -56,12 +56,8 @@ const showDeviceModal = ref(false)
 const newDevice = ref({
     internal_sn: '',
     mac_address: '',
-    internal_sn: '',
-    mac_address: '',
     location_id: '',
     notes: '',
-    ssh_port: 2222,
-    ssh_username: 'user',
     ssh_port: 2222,
     ssh_username: 'user',
     ssh_password: 'admin',
@@ -81,16 +77,18 @@ const createDevice = async () => {
         return
     }
     try {
-        await axios.post('/api/boxes/', {
-            ...newDevice.value,
-            status: 'NEW'
-        })
-        showDeviceModal.value = false
+        const payload = { ...newDevice.value, status: 'NEW' }
+        if (!payload.location_id) payload.location_id = null
+        if (!payload.template_id) payload.template_id = null
+        
+        await axios.post('/api/boxes/', payload)
         showDeviceModal.value = false
         newDevice.value = { internal_sn: '', mac_address: '', location_id: '', notes: '', template_id: '' }
         await fetchBoxes()
     } catch (e) {
-        alert("Failed to create type: " + (e.response?.data?.detail || e.message))
+        const detail = e.response?.data?.detail
+        const errMsg = typeof detail === 'object' ? JSON.stringify(detail) : (detail || e.message)
+        alert("Failed to create device: " + errMsg)
     }
 }
  
@@ -231,14 +229,16 @@ const selectedDeviceGroup = ref('')
 const selectedTemplate = ref('')
 
 const batchDelete = async () => {
-    if (!confirm(`Delete ${selectedBoxIds.value.length} devices? This cannot be undone.`)) return
+    if (!confirm(t('inventory.batch.delete_confirm', { count: selectedBoxIds.value.length }))) return
     
     try {
         await axios.post('/api/boxes/batch/delete', selectedBoxIds.value)
         await fetchBoxes()
         selectedBoxIds.value = []
+        await fetchBoxes()
+        selectedBoxIds.value = []
     } catch (e) {
-        alert("Batch delete failed")
+        alert(t('inventory.batch.delete_fail'))
     }
 }
 
@@ -249,9 +249,11 @@ const batchApplyTag = async () => {
         showBatchTagModal.value = false
         selectedDeviceGroup.value = ''
         await fetchBoxes()
-        alert("Tags applied successfully")
+        selectedDeviceGroup.value = ''
+        await fetchBoxes()
+        alert(t('inventory.batch.tag_success'))
     } catch (e) {
-        alert("Batch tag failed")
+        alert(t('inventory.batch.tag_fail'))
     }
 }
 
@@ -261,19 +263,20 @@ const batchApplyTemplate = async () => {
         await axios.post(`/api/boxes/batch/apply-template/${selectedTemplate.value}`, selectedBoxIds.value)
         showBatchTemplateModal.value = false
         selectedTemplate.value = ''
-        alert("Template applied successfully")
+        selectedTemplate.value = ''
+        alert(t('inventory.batch.template_success'))
     } catch (e) {
-        alert("Batch template failed")
+        alert(t('inventory.batch.template_fail'))
     }
 }
 
 const batchProvision = async () => {
-    if (!confirm(`Start provisioning for ${selectedBoxIds.value.length} devices? This will wipe data on the devices.`)) return
+    if (!confirm(t('inventory.batch.provision_confirm', { count: selectedBoxIds.value.length }))) return
     try {
         await axios.post('/api/boxes/batch/provision', selectedBoxIds.value)
         await fetchBoxes()
         selectedBoxIds.value = []
-        alert("Provisioning started. PXE configs updated.")
+        alert(t('inventory.batch.provision_started'))
     } catch (e) {
         alert("Provisioning failed: " + (e.response?.data?.detail || e.message))
     }
@@ -428,7 +431,7 @@ onMounted(() => {
             class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
             :class="activeTab === 'device_groups' ? 'border-brand-500 text-white' : 'border-transparent text-slate-400 hover:text-slate-200'"
         >
-            {{ t('inventory.tabs.groups') }}
+            {{ t('inventory.tabs.device_groups') }}
         </button>
         <button 
             @click="activeTab = 'locations'"
@@ -445,24 +448,24 @@ onMounted(() => {
              <!-- Batch Actions Left -->
             <div class="flex items-center gap-4 min-w-0" v-if="selectedBoxIds.length > 0">
                  <div class="flex items-center gap-3">
-                    <span class="text-white font-medium whitespace-nowrap">{{ selectedBoxIds.length }} selected</span>
+                    <span class="text-white font-medium whitespace-nowrap">{{ t('inventory.batch.selected', { count: selectedBoxIds.length }) }}</span>
                     <div class="h-5 w-px bg-slate-700"></div>
-                     <button @click="selectedBoxIds = []" class="text-slate-500 hover:text-white text-sm whitespace-nowrap">Clear</button>
+                     <button @click="selectedBoxIds = []" class="text-slate-500 hover:text-white text-sm whitespace-nowrap">{{ t('inventory.batch.clear') }}</button>
                 </div>
                  <div class="h-5 w-px bg-slate-700 hidden md:block"></div>
                 <div class="flex items-center gap-4 overflow-x-auto">
                     <button @click="batchDelete" class="text-red-400 hover:text-red-300 text-sm font-medium flex items-center gap-1 whitespace-nowrap">
-                        Delete
+                        {{ t('inventory.batch.delete') }}
                     </button>
                     <button @click="showBatchTagModal = true" class="text-brand-400 hover:text-brand-300 text-sm font-medium flex items-center gap-1 whitespace-nowrap">
-                        Add Tag
+                        {{ t('inventory.batch.add_tag') }}
                     </button>
                      <button @click="showBatchTemplateModal = true" class="text-brand-400 hover:text-brand-300 text-sm font-medium flex items-center gap-1 whitespace-nowrap">
-                        Apply Template
+                        {{ t('inventory.batch.apply_template') }}
                     </button>
                     <div class="h-4 w-px bg-slate-700 mx-2"></div>
                     <button @click="batchProvision" class="text-blue-400 hover:text-blue-300 text-sm font-bold flex items-center gap-1 whitespace-nowrap">
-                        PROVISION
+                        {{ t('inventory.batch.provision') }}
                     </button>
                 </div>
             </div>
@@ -634,7 +637,7 @@ onMounted(() => {
         <!-- Add Button -->
         <div class="flex justify-end">
             <button @click="showDeviceGroupModal = true" class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                + Add Device Group
+                + {{ t('inventory.add_tag') }}
             </button>
         </div>
 
@@ -647,22 +650,21 @@ onMounted(() => {
                 </div>
                 <div class="mt-4 pt-4 border-t border-slate-700/50 flex justify-end">
                     <button @click="deleteDeviceGroup(grp.id)" class="text-slate-500 hover:text-red-400 text-sm font-medium transition-colors">
-                        Delete
+                        {{ t('common.delete') }}
                     </button>
                 </div>
             </div>
             <div v-if="deviceGroups.length === 0" class="text-slate-500 text-sm col-span-full text-center py-8">
-                No device groups found.
+                {{ t('inventory.no_tags') }}
             </div>
         </div>
     </div>
 
     <!-- Locations Tab -->
     <div v-if="activeTab === 'locations'">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-white">Locations</h2>
+        <div class="flex justify-end mb-6">
             <button @click="showLocationModal = true" class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
-                <span>+</span> Add Location
+                <span>+</span> {{ t('inventory.add_location') }}
             </button>
         </div>
 
@@ -674,86 +676,92 @@ onMounted(() => {
                 </div>
                 <div class="mt-4 pt-4 border-t border-slate-700/50 flex justify-end">
                     <button @click="deleteLocation(loc.id)" class="text-slate-500 hover:text-red-400 text-sm font-medium transition-colors">
-                        Delete
+                        {{ t('common.delete') }}
                     </button>
                 </div>
             </div>
             <div v-if="locations.length === 0" class="text-slate-500 text-sm col-span-full text-center py-8">
-                No locations found.
+                {{ t('inventory.no_locations') }}
             </div>
         </div>
     </div>
 
     <!-- Add Device Modal -->
     <div v-if="showDeviceModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 w-full max-w-md shadow-2xl">
-            <h3 class="text-xl font-bold text-white mb-6">Add New Device</h3>
+        <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 w-full max-w-2xl shadow-2xl">
+            <h3 class="text-xl font-bold text-white mb-6">{{ t('inventory.add_device') }}</h3>
             
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">Internal SN / Hostname <span class="text-red-500">*</span></label>
-                    <input v-model="newDevice.internal_sn" type="text" placeholder="e.g. DEVICE-001" 
-                        class="w-full bg-slate-800 border rounded-lg px-4 py-2 text-white focus:ring-brand-500 focus:border-brand-500 outline-none transition-colors"
-                        :class="!newDevice.internal_sn ? 'border-red-500/50' : 'border-slate-600'" />
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">MAC Address <span class="text-red-500">*</span></label>
-                    <input v-model="newDevice.mac_address" type="text" placeholder="e.g. 00:11:22:33:44:55" 
-                        class="w-full bg-slate-800 border rounded-lg px-4 py-2 text-white focus:ring-brand-500 focus:border-brand-500 outline-none transition-colors"
-                        :class="(!newDevice.mac_address || (newDevice.mac_address && !isValidMac)) ? 'border-red-500/50' : 'border-slate-600'" />
-                    <p v-if="newDevice.mac_address && !isValidMac" class="text-xs text-red-500 mt-1">Invalid format (XX:XX:XX:XX:XX:XX)</p>
-                </div>
-                <div>
-                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('inventory.table.location') }}</label>
-                    <select v-model="newDevice.location_id" 
-                        class="bg-slate-800 border text-white text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5 transition-colors border-slate-600">
-                        <option value="">Select Location</option>
-                        <option v-for="loc in locations" :key="loc.id" :value="loc.id">
-                            {{ loc.name }}
-                        </option>
-                    </select>
-                </div>
-                
-                <div class="border-t border-slate-700 pt-4 mt-4">
-                    <h4 class="text-sm font-bold text-white mb-3">{{ t('box_details.ssh_config') }}</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('box_details.ssh_port') }}</label>
-                            <input v-model="newDevice.ssh_port" type="number" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-brand-500 focus:border-brand-500 outline-none" />
-                        </div>
-                        <div>
-                             <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('box_details.ssh_username') }}</label>
-                            <input v-model="newDevice.ssh_username" type="text" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-brand-500 focus:border-brand-500 outline-none" />
-                        </div>
-                         <div class="col-span-2">
-                             <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('box_details.ssh_password') }}</label>
-                            <input v-model="newDevice.ssh_password" type="text" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-brand-500 focus:border-brand-500 outline-none" />
-                        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left Column: Identity -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('inventory.table.internal_sn') }} / Hostname <span class="text-red-500">*</span></label>
+                        <input v-model="newDevice.internal_sn" type="text" placeholder="e.g. DEVICE-001" 
+                            class="w-full bg-slate-800 border rounded-lg px-4 py-2 text-white focus:ring-brand-500 focus:border-brand-500 outline-none transition-colors"
+                            :class="!newDevice.internal_sn ? 'border-red-500/50' : 'border-slate-600'" />
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('inventory.table.mac_address') }} <span class="text-red-500">*</span></label>
+                        <input v-model="newDevice.mac_address" type="text" placeholder="e.g. 00:11:22:33:44:55" 
+                            class="w-full bg-slate-800 border rounded-lg px-4 py-2 text-white focus:ring-brand-500 focus:border-brand-500 outline-none transition-colors"
+                            :class="(!newDevice.mac_address || (newDevice.mac_address && !isValidMac)) ? 'border-red-500/50' : 'border-slate-600'" />
+                        <p v-if="newDevice.mac_address && !isValidMac" class="text-xs text-red-500 mt-1">Invalid format (XX:XX:XX:XX:XX:XX)</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('inventory.table.location') }}</label>
+                        <select v-model="newDevice.location_id" 
+                            class="bg-slate-800 border text-white text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5 transition-colors border-slate-600">
+                            <option value="">{{ t('inventory.modal.select_location') }}</option>
+                            <option v-for="loc in locations" :key="loc.id" :value="loc.id">
+                                {{ loc.name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('inventory.modal.apply_template') }}</label>
+                        <select v-model="newDevice.template_id" class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5">
+                            <option value="">{{ t('inventory.modal.none') }}</option>
+                            <option v-for="grp in componentGroups" :key="grp.id" :value="grp.id">
+                                {{ grp.name }} ({{ grp.items.length }} items)
+                            </option>
+                        </select>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs uppercase text-slate-500 font-bold mb-1">Notes</label>
-                    <textarea v-model="newDevice.notes" placeholder="Optional notes" rows="3" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-brand-500 focus:border-brand-500 outline-none"></textarea>
+
+                <!-- Right Column: Config -->
+                <div class="space-y-4">
+                    <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-3">{{ t('box_details.ssh_config') }}</h4>
+                        <div class="space-y-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">{{ t('box_details.ssh_port') }}</label>
+                                    <input v-model="newDevice.ssh_port" type="number" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-sm text-white focus:ring-brand-500 focus:border-brand-500 outline-none" />
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">{{ t('box_details.ssh_username') }}</label>
+                                    <input v-model="newDevice.ssh_username" type="text" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-sm text-white focus:ring-brand-500 focus:border-brand-500 outline-none" />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">{{ t('box_details.ssh_password') }}</label>
+                                <input v-model="newDevice.ssh_password" type="text" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-sm text-white focus:ring-brand-500 focus:border-brand-500 outline-none" />
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 font-bold mb-1">{{ t('inventory.modal.notes') }}</label>
+                        <textarea v-model="newDevice.notes" :placeholder="t('inventory.modal.optional_notes')" rows="4" class="w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-brand-500 focus:border-brand-500 outline-none resize-none"></textarea>
+                    </div>
                 </div>
             </div>
-            
-            <div class="mt-4 border-t border-slate-700 pt-4">
-                <label class="block text-xs uppercase text-slate-500 font-bold mb-1">Apply Template (Optional)</label>
-                <select v-model="newDevice.template_id" class="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5">
-                    <option value="">None</option>
-                    <option v-for="grp in componentGroups" :key="grp.id" :value="grp.id">
-                        {{ grp.name }} ({{ grp.items.length }} items)
-                    </option>
-                </select>
-                <p class="text-xs text-slate-500 mt-1">Automatically add components from selected template.</p>
-            </div>
 
-            <div class="flex justify-end gap-3 mt-8">
+            <div class="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-700">
                 <button @click="showDeviceModal = false" class="text-slate-400 hover:text-white font-medium px-4 py-2 transition-colors">
-                    Cancel
+                    {{ t('common.cancel') }}
                 </button>
                 <button @click="createDevice" :disabled="!newDevice.internal_sn || !isValidMac" class="bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-medium transition-colors">
-                    Create
+                    {{ t('common.create') }}
                 </button>
             </div>
         </div>
