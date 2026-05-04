@@ -20,11 +20,19 @@ class BoxBase(BaseModel):
     ip_address: Optional[Union[str, IPv4Address, IPv6Address]] = None
     status: BoxStatus = BoxStatus.NEW
     location_id: Optional[UUID] = None
+    os_image_id: Optional[UUID] = None
 
     notes: Optional[str] = None
     ssh_port: int = 2222
     ssh_username: str = "user"
     ssh_password: str = "admin"
+
+    @field_validator('location_id', 'os_image_id', mode='before')
+    @classmethod
+    def empty_string_to_none(cls, v: Any) -> Any:
+        if v == "":
+            return None
+        return v
 
     @field_validator('mac_address')
     @classmethod
@@ -43,10 +51,18 @@ class BoxUpdate(BaseModel):
     ip_address: Optional[str] = None
     status: Optional[BoxStatus] = None
     location_id: Optional[UUID] = None
+    os_image_id: Optional[UUID] = None
     notes: Optional[str] = None
     ssh_port: Optional[int] = None
     ssh_username: Optional[str] = None
     ssh_password: Optional[str] = None
+
+    @field_validator('location_id', 'os_image_id', mode='before')
+    @classmethod
+    def empty_string_to_none(cls, v: Any) -> Any:
+        if v == "":
+            return None
+        return v
 
     @field_validator('mac_address')
     @classmethod
@@ -55,7 +71,7 @@ class BoxUpdate(BaseModel):
             return None
         return str(v).strip().replace('-', ':').upper()
 
-from app.schemas.library import ComponentDefinition
+from app.schemas.library import ComponentDefinition, OsImage
 
 class ComponentBase(BaseModel):
     definition_id: UUID
@@ -75,5 +91,6 @@ class Box(BoxBase):
     id: UUID
     components: List[Component] = []
     location: Optional[Location] = None
+    os_image: Optional[OsImage] = None
     
     model_config = ConfigDict(from_attributes=True)

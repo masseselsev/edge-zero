@@ -1,13 +1,14 @@
 import os
 import shutil
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+import subprocess
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from typing import List
 from uuid import UUID
 
 from app.db.session import get_db
-from app.models.os_image import OsImage as OsImageModel
+from app.models.os_image import OsImage as OsImageModel, ImageStatus
 from app.models.system_settings import SystemSettings as SystemSettingsModel
 from app.models.init_script import InitScript as InitScriptModel
 from app.models.component_definition import ComponentDefinition as ComponentDefinitionModel
@@ -40,6 +41,7 @@ async def upload_image(
     file: UploadFile = File(...),
     os_type: OsType = Form(OsType.DEBIAN),
     is_active: bool = Form(False),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: AsyncSession = Depends(get_db)
 ):
     # Save file to disk
@@ -58,12 +60,10 @@ async def upload_image(
     db_image = OsImageModel(
         filename=file.filename,
         os_type=os_type,
-        is_active=is_active
+        is_active=is_active,
+        status=ImageStatus.PROCESSING
     )
     
-    if is_active:
-        pass 
-
     db.add(db_image)
     try:
         await db.commit()
@@ -74,7 +74,62 @@ async def upload_image(
         raise HTTPException(status_code=500, detail=f"Database commit failed: {e}")
         
     await db.refresh(db_image)
+    
+    # Extract assets in background
+    background_tasks.add_task(_extract_iso_assets, file_location, db_image.id, db_image.filename)
+    
     return db_image
+
+async def _extract_iso_assets(iso_path: str, image_id: UUID, filename: str):
+    """
+    Extracts vmlinuz and initrd from ISO using 7z and updates DB status.
+    """
+    from app.db.session import AsyncSessionLocal
+    import asyncio
+    
+    async with AsyncSessionLocal() as db:
+        try:
+            image_dir_name = filename.replace(".iso", "").replace(".ISO", "")
+            target_dir = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name)
+            os.makedirs(target_dir, exist_ok=True)
+            
+            patterns = ["vmlinuz*", "initrd*", "linux", "initrd.img"]
+            found_any = False
+            
+            for pattern in patterns:
+                try:
+                    # Use asyncio subprocess to avoid blocking the event loop
+                    process = await asyncio.create_subprocess_exec(
+                        "7z", "e", iso_path, pattern, "-r", "-y", f"-o{target_dir}",
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE
+                    )
+                    await process.communicate()
+                    if process.returncode == 0:
+                        found_any = True
+                except Exception as e:
+                    print(f"Subprocess error for pattern {pattern}: {e}")
+                    continue
+
+            status = ImageStatus.READY if found_any else ImageStatus.ERROR
+            
+            # Update DB
+            await db.execute(
+                update(OsImageModel)
+                .where(OsImageModel.id == image_id)
+                .values(status=status)
+            )
+            await db.commit()
+            print(f"Extraction completed for {filename} with status {status}")
+
+        except Exception as e:
+            print(f"Failed to extract assets from {filename}: {e}")
+            await db.execute(
+                update(OsImageModel)
+                .where(OsImageModel.id == image_id)
+                .values(status=ImageStatus.ERROR)
+            )
+            await db.commit()
 
 @router.delete("/images/{image_id}")
 async def delete_image(image_id: UUID, db: AsyncSession = Depends(get_db)):
@@ -83,10 +138,16 @@ async def delete_image(image_id: UUID, db: AsyncSession = Depends(get_db)):
     if not image:
         raise HTTPException(status_code=404, detail="Image not found")
     
-    # Remove from disk
+    # Remove from disk (ISO)
     file_path = os.path.join(ISO_DIR, image.filename)
     if os.path.exists(file_path):
         os.remove(file_path)
+    
+    # Remove extracted assets
+    image_dir_name = image.filename.replace(".iso", "").replace(".ISO", "")
+    target_dir = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name)
+    if os.path.exists(target_dir):
+        shutil.rmtree(target_dir)
     
     # Remove from DB
     await db.delete(image)

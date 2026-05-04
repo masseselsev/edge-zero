@@ -7,3 +7,6 @@ from app.models.vpn_credential import VpnCredential
 from app.models.init_script import InitScript
 from app.models.component_group import ComponentGroup, ComponentGroupItem
 from app.models.device_group import DeviceGroup
+from app.models.user import User
+from app.models.location import Location
+from app.models.component_definition import ComponentDefinition

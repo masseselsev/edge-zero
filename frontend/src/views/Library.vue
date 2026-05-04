@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { useI18n } from 'vue-i18n'
 
@@ -16,6 +16,7 @@ const uploadStats = ref({
     percent: 0
 })
 let abortController = null // Request cancellation controller
+let pollingInterval = null
 
 // Stats Helper
 const formatBytes = (bytes, decimals = 2) => {
@@ -53,8 +54,27 @@ const fetchImages = async () => {
     try {
         const res = await axios.get('/api/library/images')
         images.value = res.data
+        
+        // Check if we need polling
+        const hasProcessing = images.value.some(img => img.status === 'PROCESSING')
+        if (hasProcessing && !pollingInterval) {
+            startPolling()
+        } else if (!hasProcessing && pollingInterval) {
+            stopPolling()
+        }
     } catch (e) {
         console.error(e)
+    }
+}
+
+const startPolling = () => {
+    pollingInterval = setInterval(fetchImages, 3000)
+}
+
+const stopPolling = () => {
+    if (pollingInterval) {
+        clearInterval(pollingInterval)
+        pollingInterval = null
     }
 }
 
@@ -94,7 +114,6 @@ const uploadImage = async () => {
         })
         uploadFile.value = null
         await fetchImages()
-        alert("Upload Successful")
     } catch (e) {
         if (axios.isCancel(e)) {
             alert("Upload Cancelled")
@@ -132,7 +151,6 @@ const uploadScript = async () => {
         })
         scriptFile.value = null
         await fetchScripts()
-        alert("Script Upload Successful")
     } catch (e) {
         alert("Upload Failed")
     } finally {
@@ -191,6 +209,10 @@ onMounted(() => {
     fetchImages()
     fetchScripts()
     fetchComponents()
+})
+
+onUnmounted(() => {
+    stopPolling()
 })
 
 // ... other functions ...
@@ -278,7 +300,26 @@ const deleteScript = async (id) => {
             <div v-for="img in images" :key="img.id" class="glass-panel p-4 rounded-xl flex justify-between items-center group">
                 <div>
                     <div class="font-bold text-white">{{ img.filename }}</div>
-                    <div class="text-xs text-slate-400 mt-1">{{ img.os_type }}</div>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-xs text-slate-400">{{ img.os_type }}</span>
+                        <span 
+                            v-if="img.status !== 'READY'"
+                            class="text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                            :class="{
+                                'bg-brand-500/10 text-brand-400 animate-pulse': img.status === 'PROCESSING',
+                                'bg-red-500/10 text-red-400': img.status === 'ERROR',
+                                'bg-slate-700 text-slate-400': img.status === 'UPLOADED'
+                            }"
+                        >
+                            {{ img.status }}
+                        </span>
+                        <span v-else class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Ready
+                        </span>
+                    </div>
                 </div>
                 <button @click="deleteImage(img.id)" class="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
                     {{ t('common.delete') }}

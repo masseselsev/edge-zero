@@ -3,6 +3,8 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y \
     dnsmasq \
     nginx \
+    syslinux-common \
+    pxelinux \
     && rm -rf /var/lib/apt/lists/*
 
 # Create config directories
@@ -17,6 +19,15 @@ COPY docker/infra/nginx.conf /etc/nginx/nginx.conf
 # For now, we start dnsmasq and nginx.
 
 COPY docker/infra/entrypoint.sh /entrypoint.sh
+COPY docker/infra/dnsmasq.conf /etc/dnsmasq.conf
 RUN chmod +x /entrypoint.sh
+
+# Initialize TFTP directory with PXE files
+RUN mkdir -p /tftpboot && \
+    cp /usr/lib/PXELINUX/pxelinux.0 /tftpboot/ && \
+    cp /usr/lib/syslinux/modules/bios/ldlinux.c32 /tftpboot/ && \
+    cp /usr/lib/syslinux/modules/bios/menu.c32 /tftpboot/ && \
+    cp /usr/lib/syslinux/modules/bios/libutil.c32 /tftpboot/ && \
+    cp /usr/lib/syslinux/modules/bios/libcom32.c32 /tftpboot/
 
 ENTRYPOINT ["/entrypoint.sh"]

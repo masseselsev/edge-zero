@@ -7,10 +7,17 @@ class OsType(str, Enum):
     DEBIAN = "DEBIAN"
     UBUNTU = "UBUNTU"
 
+class OsImageStatus(str, Enum):
+    UPLOADED = "UPLOADED"
+    PROCESSING = "PROCESSING"
+    READY = "READY"
+    ERROR = "ERROR"
+
 class OsImageBase(BaseModel):
     filename: str
     os_type: OsType
     is_active: bool = False
+    status: OsImageStatus = OsImageStatus.UPLOADED
 
 class OsImageCreate(OsImageBase):
     pass

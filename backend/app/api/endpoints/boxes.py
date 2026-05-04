@@ -120,7 +120,9 @@ async def read_boxes(skip: int = 0, limit: int = 100, db: AsyncSession = Depends
         select(BoxModel)
         .options(
             selectinload(BoxModel.components).selectinload(ComponentModel.definition),
-            selectinload(BoxModel.device_groups)
+            selectinload(BoxModel.device_groups),
+            selectinload(BoxModel.location),
+            selectinload(BoxModel.os_image)
         )
         .offset(skip)
         .limit(limit)
@@ -152,7 +154,9 @@ async def create_box(box: BoxCreate, db: AsyncSession = Depends(get_db)):
         select(BoxModel)
         .options(
             selectinload(BoxModel.components).selectinload(ComponentModel.definition),
-            selectinload(BoxModel.device_groups)
+            selectinload(BoxModel.device_groups),
+            selectinload(BoxModel.location),
+            selectinload(BoxModel.os_image)
         )
         .where(BoxModel.id == db_box.id)
     )
@@ -168,7 +172,9 @@ async def read_box(box_id: UUID, db: AsyncSession = Depends(get_db)):
         select(BoxModel)
         .options(
             selectinload(BoxModel.components).selectinload(ComponentModel.definition),
-            selectinload(BoxModel.device_groups)
+            selectinload(BoxModel.device_groups),
+            selectinload(BoxModel.location),
+            selectinload(BoxModel.os_image)
         )
         .where(BoxModel.id == box_id)
     )
@@ -189,7 +195,19 @@ async def update_box(box_id: UUID, box_in: BoxUpdate, db: AsyncSession = Depends
         setattr(box, field, value)
     
     await db.commit()
-    await db.refresh(box)
+    
+    # Reload with relationships
+    result = await db.execute(
+        select(BoxModel)
+        .options(
+            selectinload(BoxModel.components).selectinload(ComponentModel.definition),
+            selectinload(BoxModel.device_groups),
+            selectinload(BoxModel.location),
+            selectinload(BoxModel.os_image)
+        )
+        .where(BoxModel.id == box_id)
+    )
+    box = result.scalars().first()
     return box
 
 @router.delete("/{box_id}")
@@ -260,7 +278,7 @@ async def upload_csv(file: UploadFile = File(...), db: AsyncSession = Depends(ge
             # Update
             existing_box.internal_sn = row.get("internal_sn", existing_box.internal_sn).strip()
             existing_box.ip_address = ip_val
-            existing_box.location = row.get("location", "").strip()
+            # existing_box.location = row.get("location", "").strip() # Remove non-existent field
             existing_box.notes = row.get("notes", "").strip()
             count_updated += 1
         else:
@@ -269,7 +287,7 @@ async def upload_csv(file: UploadFile = File(...), db: AsyncSession = Depends(ge
                 internal_sn=row.get("internal_sn", "UNKNOWN").strip(),
                 mac_address=mac,
                 ip_address=ip_val,
-                location=row.get("location", "").strip(),
+                # location=row.get("location", "").strip(), # Remove non-existent field
                 notes=row.get("notes", "").strip(),
                 status=BoxStatus.NEW
             )

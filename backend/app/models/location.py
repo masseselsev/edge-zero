@@ -11,4 +11,4 @@ class Location(Base):
     name = Column(String, unique=True, nullable=False)
     description = Column(Text, nullable=True)
 
-    boxes = relationship("Box", back_populates="location_rel")
+    boxes = relationship("Box", back_populates="location")

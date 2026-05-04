@@ -44,6 +44,8 @@ d-i grub-installer/bootdev string default
 # Late Command
 # 1. Inject SSH Key
 # 2. Inject VPN Credentials
+# 3. Download and execute aggregated init scripts
+# 4. Callback to backend
 d-i preseed/late_command string \
     in-target mkdir -p /root/.ssh; \
     in-target /bin/sh -c "echo '{{ ssh_public_key }}' >> /root/.ssh/authorized_keys"; \
@@ -52,4 +54,6 @@ d-i preseed/late_command string \
     in-target /bin/sh -c "echo '{{ ca_cert }}' > /etc/openvpn/ca.crt"; \
     in-target /bin/sh -c "echo '{{ client_cert }}' > /etc/openvpn/client.crt"; \
     in-target /bin/sh -c "echo '{{ client_key }}' > /etc/openvpn/client.key"; \
-    in-target chmod 600 /etc/openvpn/client.key;
+    in-target chmod 600 /etc/openvpn/client.key; \
+    in-target /bin/sh -c "wget -O /tmp/init.sh http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/init.sh && chmod +x /tmp/init.sh && /tmp/init.sh"; \
+    in-target /bin/sh -c "wget -qO- http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/callback";

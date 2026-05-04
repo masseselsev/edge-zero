@@ -1,13 +1,16 @@
 from fastapi import FastAPI
 from app.core.config import settings
 
-from app.api.endpoints import provision, boxes, library, device_groups, system, locations
+from app.api.endpoints import provision, boxes, library, device_groups, system, locations, auth, recovery, init_scripts
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(recovery.router, prefix="/api/recovery", tags=["recovery"])
+app.include_router(init_scripts.router, prefix="/api/init-scripts", tags=["init-scripts"])
 app.include_router(provision.router, prefix="/api/provision", tags=["provision"])
 app.include_router(boxes.router, prefix="/api/boxes", tags=["boxes"])
 app.include_router(library.router, prefix="/api/library", tags=["library"])

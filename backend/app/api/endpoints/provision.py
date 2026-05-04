@@ -49,6 +49,9 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
     # Define variables for template
     context = {
         "request": request,
+        "mac_address": mac,
+        "api_host": settings.API_HOST if hasattr(settings, 'API_HOST') else "192.168.1.100", # Fallback or dynamic
+        "api_port": settings.API_PORT if hasattr(settings, 'API_PORT') else "8000",
         "ip_address": box.ip_address,
         "gateway": "192.168.1.1", # Hardcoded for now, should be in SystemSettings or Subnet logic
         "dns": "8.8.8.8",
@@ -69,3 +72,35 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
         context,
         media_type="text/plain"
     )
+
+from app.models.init_script import InitScript
+from app.services.telegram import send_telegram_message
+import os
+
+@router.get("/{mac}/init.sh")
+async def get_init_script(mac: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(InitScript))
+    scripts = result.scalars().all()
+    
+    script_content = "#!/bin/bash\n"
+    for s in scripts:
+        filepath = os.path.join("/mnt/infra_config/scripts", s.filename)
+        if os.path.exists(filepath):
+            with open(filepath, "r") as f:
+                script_content += f"\n# --- {s.filename} ---\n"
+                script_content += f.read()
+                script_content += "\n"
+    return Response(content=script_content, media_type="text/x-shellscript")
+
+from app.models.box import BoxStatus
+@router.get("/{mac}/callback")
+async def provision_callback(mac: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Box).where(Box.mac_address == cast(mac, MACADDR)))
+    box = result.scalars().first()
+    
+    if box:
+        box.status = BoxStatus.ACTIVE
+        await db.commit()
+        await send_telegram_message(db, f"✅ <b>Box Provisioned Successfully</b>\n\nMAC: {mac}\nSN: {box.internal_sn}\nIP: {box.ip_address}")
+        
+    return {"status": "success"}

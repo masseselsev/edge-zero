@@ -99,10 +99,21 @@ const locations = ref([])
 const isEditingLocation = ref(false)
 const selectedLocationId = ref('')
 
+const osImages = ref([])
+const isEditingOsImage = ref(false)
+const selectedOsImageId = ref('')
+
 const fetchLocations = async () => {
     try {
         const res = await axios.get('/api/locations/')
         locations.value = res.data
+    } catch (e) { console.error(e) }
+}
+
+const fetchOsImages = async () => {
+    try {
+        const res = await axios.get('/api/library/images')
+        osImages.value = res.data
     } catch (e) { console.error(e) }
 }
 
@@ -115,6 +126,18 @@ const updateLocation = async () => {
         box.value = res.data
     } catch (e) {
         alert("Failed to update location")
+    }
+}
+
+const updateOsImage = async () => {
+    try {
+        await axios.put(`/api/boxes/${box.value.id}`, { os_image_id: selectedOsImageId.value })
+        isEditingOsImage.value = false
+        // Refresh
+        const res = await axios.get(`/api/boxes/${box.value.id}`)
+        box.value = res.data
+    } catch (e) {
+        alert("Failed to update OS image")
     }
 }
 
@@ -154,6 +177,7 @@ const openEditModal = () => {
         internal_sn: box.value.internal_sn,
         mac_address: box.value.mac_address,
         location_id: box.value.location_id,
+        os_image_id: box.value.os_image_id,
         notes: box.value.notes,
         ssh_port: box.value.ssh_port,
         ssh_username: box.value.ssh_username,
@@ -198,6 +222,7 @@ onMounted(async () => {
         fetchTemplates()
         fetchDeviceGroups()
         fetchLocations()
+        fetchOsImages()
     } catch (e) {
         error.value = "Failed to load box details."
         console.error(e)
@@ -293,6 +318,21 @@ const getStatusColor = (status) => {
                          </select>
                          <button @click="updateLocation" class="text-xs text-green-500 hover:text-green-400">Save</button>
                          <button @click="isEditingLocation = false" class="text-xs text-slate-500 hover:text-white">Cancel</button>
+                     </div>
+                </div>
+                <div>
+                     <label class="block text-xs uppercase text-slate-500 font-bold mb-1">OS Image</label>
+                    <div v-if="!isEditingOsImage" class="flex items-center gap-2 group">
+                        <div class="text-slate-200">{{ box.os_image?.filename || 'Standard Debian' }}</div>
+                        <button @click="isEditingOsImage = true; selectedOsImageId = box.os_image?.id || ''" class="text-xs text-brand-500 opacity-0 group-hover:opacity-100 transition-opacity">Edit</button>
+                    </div>
+                     <div v-else class="flex items-center gap-2">
+                         <select v-model="selectedOsImageId" class="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white">
+                             <option value="">Standard Debian</option>
+                             <option v-for="img in osImages" :key="img.id" :value="img.id">{{ img.filename }}</option>
+                         </select>
+                         <button @click="updateOsImage" class="text-xs text-green-500 hover:text-green-400">Save</button>
+                         <button @click="isEditingOsImage = false" class="text-xs text-slate-500 hover:text-white">Cancel</button>
                      </div>
                 </div>
                 <div>
@@ -479,6 +519,16 @@ const getStatusColor = (status) => {
                             <option value="">{{ t('inventory.modal.select_location') }}</option>
                             <option v-for="loc in locations" :key="loc.id" :value="loc.id">
                                 {{ loc.name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase text-slate-500 font-bold mb-1">OS Image</label>
+                        <select v-model="editDeviceData.os_image_id" 
+                            class="bg-slate-800 border text-white text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5 transition-colors border-slate-600">
+                            <option value="">None (Standard Debian)</option>
+                            <option v-for="img in osImages" :key="img.id" :value="img.id">
+                                {{ img.filename }}
                             </option>
                         </select>
                     </div>

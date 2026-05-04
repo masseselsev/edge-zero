@@ -20,10 +20,12 @@ class Box(Base):
     mac_address = Column(MACADDR, unique=True, nullable=False)
     ip_address = Column(INET, nullable=True) # Check if static IP is mandatory initially or assigned later. Prompt says "Static IP assigned by us"
     status = Column(Enum(BoxStatus, name="box_status"), default=BoxStatus.NEW)
-    location_id = Column(UUID(as_uuid=True), ForeignKey("locations.id"), nullable=True)
+    location_id = Column(UUID(as_uuid=True), ForeignKey("locations.id", ondelete="SET NULL"), nullable=True)
+    os_image_id = Column(UUID(as_uuid=True), ForeignKey("os_images.id", ondelete="SET NULL"), nullable=True)
     notes = Column(Text, nullable=True)
 
-    location_rel = relationship("Location", back_populates="boxes")
+    location = relationship("Location", back_populates="boxes")
+    os_image = relationship("app.models.os_image.OsImage")
 
     # SSH Configuration
     ssh_port = Column(Integer, default=2222)

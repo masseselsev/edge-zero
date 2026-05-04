@@ -58,6 +58,9 @@ onUnmounted(() => {
       <router-link to="/settings" class="flex items-center px-3 py-2 text-base font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-md group" active-class="bg-slate-700/50 text-white">
         <span class="truncate">{{ t('sidebar.settings') }}</span>
       </router-link>
+      <router-link to="/scripts" class="flex items-center px-3 py-2 text-base font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-md group" active-class="bg-slate-700/50 text-white">
+        <span class="truncate">Init Scripts</span>
+      </router-link>
     </nav>
 
     <div class="p-4 border-t border-slate-700">

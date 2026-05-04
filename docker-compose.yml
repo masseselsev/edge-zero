@@ -11,7 +11,7 @@ services:
     networks:
       - overwatch-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U overwatch"]
+      test: [ "CMD-SHELL", "pg_isready -U overwatch" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -26,7 +26,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+asyncpg://overwatch:overwatch_password@overwatch-db:5432/overwatch
-      API_HOST: 0.0.0.0
+      API_HOST: 192.168.188.2
       API_PORT: 8000
     volumes:
       - ./backend:/app
@@ -35,7 +35,7 @@ services:
       - overwatch-net
     ports:
       - "8000:8000"
-    command: ["/app/entrypoint.sh"]
+    command: [ "/app/entrypoint.sh" ]
 
   overwatch-infra:
     build:
@@ -44,21 +44,18 @@ services:
     container_name: overwatch-infra
     cap_add:
       - NET_ADMIN
-    network_mode: host # Required for DHCP to relay correctly in some setups, but requirement said "sharing a network".
-                       # If we use bridge, dnsmasq needs to be aware.
-                       # "The system consists of 4 services sharing a network."
-                       # Standard Docker DHCP usually requires host networking OR a DHCP relay.
-                       # Given "Industrial Bare-Metal Provisioning", host networking is safest for PXE.
-                       # However, the user prompt says "4 services sharing a network" implying a docker network.
-                       # But `overwatch-infra` needs to answer external DHCP requests.
-                       # I'll stick to a bridge network for internal comms, but exposing ports might not be enough for DHCP (broadcasts).
-                       # Wait, "infra service must have CAP_ADD: NET_ADMIN". This implies we might try to run it isolated?
-                       # Let's use host networking for infra to be safe for DHCP/PXE, OR bind ports 67/69udp.
-                       # Configuring DHCP in docker is tricky. I'll start with binding 67/69/80/443.
-    ports:
-      - "67:67/udp"
-      - "69:69/udp"
-      - "80:80"
+    network_mode: host
+      # Required for DHCP to relay correctly in some setups, but requirement said "sharing a network".
+      # If we use bridge, dnsmasq needs to be aware.
+      # "The system consists of 4 services sharing a network."
+      # Standard Docker DHCP usually requires host networking OR a DHCP relay.
+      # Given "Industrial Bare-Metal Provisioning", host networking is safest for PXE.
+      # However, the user prompt says "4 services sharing a network" implying a docker network.
+      # But `overwatch-infra` needs to answer external DHCP requests.
+      # I'll stick to a bridge network for internal comms, but exposing ports might not be enough for DHCP (broadcasts).
+      # Wait, "infra service must have CAP_ADD: NET_ADMIN". This implies we might try to run it isolated?
+      # Let's use host networking for infra to be safe for DHCP/PXE, OR bind ports 67/69udp.
+      # Configuring DHCP in docker is tricky. I'll start with binding 67/69/80/443.
     volumes:
       - infra_config:/mnt/infra_config
     depends_on:

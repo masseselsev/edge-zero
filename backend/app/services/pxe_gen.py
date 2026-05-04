@@ -2,6 +2,7 @@ import os
 import aiofiles
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.models.box import Box, BoxStatus
 from app.core.config import settings
 
@@ -17,8 +18,12 @@ async def generate_pxe_config(db: AsyncSession):
     # Ensure directories exist
     os.makedirs(PXE_CFG_DIR, exist_ok=True)
     
-    # Query all boxes with assigned IPs
-    result = await db.execute(select(Box).where(Box.ip_address.is_not(None)))
+    # Query all boxes with MAC addresses and eagerly load OS Image
+    result = await db.execute(
+        select(Box)
+        .options(selectinload(Box.os_image))
+        .where(Box.mac_address.is_not(None))
+    )
     boxes = result.scalars().all()
 
     # 1. Generate dnsmasq.ethers
@@ -34,6 +39,16 @@ async def generate_pxe_config(db: AsyncSession):
     # 2. Generate pxelinux.cfg files for each box
     for box in boxes:
         await generate_box_pxe_config(box)
+    
+    # 3. Generate default config (Local Boot)
+    default_filepath = os.path.join(PXE_CFG_DIR, "default")
+    default_content = """
+DEFAULT local
+LABEL local
+    LOCALBOOT 0
+"""
+    async with aiofiles.open(default_filepath, "w") as f:
+        await f.write(default_content)
 
 async def generate_box_pxe_config(box: Box):
     """
@@ -52,16 +67,24 @@ async def generate_box_pxe_config(box: Box):
     
     if box.status == BoxStatus.INSTALLING:
         # PXE Boot for Installation
-        # Kernel parameters should point to our preseed URL
         preseed_url = f"http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{box.mac_address}/preseed.cfg"
-        # Assuming we have a standard debian installer kernel/initrd text.cfg
-        # This implementation requires the actual kernel/initrd files to be present in TFTP root.
         
+        # Default kernel/initrd
+        kernel = "debian-installer/linux"
+        initrd = "debian-installer/initrd.gz"
+        
+        # If box has a specific OS image, use it
+        if box.os_image:
+            # We assume extracted ISO contents are in tftp/images/{filename_without_ext}/
+            image_dir = box.os_image.filename.replace(".iso", "").replace(".ISO", "")
+            kernel = f"images/{image_dir}/vmlinuz"
+            initrd = f"images/{image_dir}/initrd.gz"
+
         config_content = f"""
 DEFAULT install
 LABEL install
-    KERNEL debian-installer/linux
-    APPEND initrd=debian-installer/initrd.gz auto=true priority=critical url={preseed_url} interface=auto
+    KERNEL {kernel}
+    APPEND initrd={initrd} auto=true priority=critical url={preseed_url} interface=auto
 """
     else:
         # Boot from local disk
