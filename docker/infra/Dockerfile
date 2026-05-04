@@ -5,6 +5,8 @@ RUN apt-get update && apt-get install -y \
     nginx \
     syslinux-common \
     pxelinux \
+    grub-efi-amd64-bin \
+    shim-signed \
     && rm -rf /var/lib/apt/lists/*
 
 # Create config directories
