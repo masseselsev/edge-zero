@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     syslinux-common \
     pxelinux \
     grub-efi-amd64-bin \
+    grub-efi-amd64-signed \
     shim-signed \
     && rm -rf /var/lib/apt/lists/*
 
