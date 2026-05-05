@@ -26,7 +26,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+asyncpg://overwatch:overwatch_password@overwatch-db:5432/overwatch
-      API_HOST: 192.168.188.2
+      API_HOST: 192.168.222.2
       API_PORT: 8000
     volumes:
       - ./backend:/app
