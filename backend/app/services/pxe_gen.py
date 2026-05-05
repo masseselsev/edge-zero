@@ -59,12 +59,25 @@ LABEL local
 set timeout=1
 set default=0
 
-# Search for config by MAC (01-aa-bb-cc-dd-ee-ff)
-# Note: net_default_mac is set by GRUB PXE
-configfile /grub/grub.cfg-01-$net_default_mac
+# GRUB's net_default_mac is colon-separated (aa:bb:cc:dd:ee:ff)
+# We need to convert it to dash-separated to match our generated files (01-aa-bb-cc-dd-ee-ff)
+regexp --set=m1 --set=m2 --set=m3 --set=m4 --set=m5 --set=m6 '^([0-9a-f]+):([0-9a-f]+):([0-9a-f]+):([0-9a-f]+):([0-9a-f]+):([0-9a-f]+)$' "$net_default_mac"
+set mac_dash="${m1}-${m2}-${m3}-${m4}-${m5}-${m6}"
+
+# Try to load from /grub/ folder
+configfile /grub/grub.cfg-01-${mac_dash}
+
+# Fallback: Try root just in case
+configfile /grub.cfg-01-${mac_dash}
 """
     async with aiofiles.open(main_grub_path, "w") as f:
         await f.write(main_grub_content)
+
+    # Also write grub.cfg to TFTP_ROOT to catch GRUB binaries that look in root
+    root_grub_path = os.path.join(TFTP_ROOT, "grub.cfg")
+    async with aiofiles.open(root_grub_path, "w") as f:
+        await f.write(main_grub_content)
+
 
 async def generate_box_pxe_config(box: Box):
     """
