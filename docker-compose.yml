@@ -58,6 +58,7 @@ services:
       # Configuring DHCP in docker is tricky. I'll start with binding 67/69/80/443.
     volumes:
       - infra_config:/mnt/infra_config
+      - ./docker/infra/dnsmasq.conf:/etc/dnsmasq.conf:ro
     depends_on:
       - overwatch-core
 
