@@ -1,0 +1,41 @@
+#cloud-config
+autoinstall:
+  version: 1
+  interactive-sections:
+    - identity # Allow user to see progress, or remove to make it fully silent
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+  network:
+    network:
+      version: 2
+      ethernets:
+        interface0:
+          match:
+            macaddress: {{ mac_address }}
+          addresses:
+            - {{ ip_address }}/24
+          gateway4: {{ gateway }}
+          nameservers:
+            addresses:
+              - {{ dns }}
+          set-name: eth0
+  ssh:
+    install-server: true
+    authorized-keys:
+      - {{ ssh_public_key }}
+    allow-pw: true
+  storage:
+    layout:
+      name: direct
+  user-data:
+    disable_root: false
+  late-commands:
+    - curtin in-target -- mkdir -p /root/.ssh
+    - curtin in-target -- sh -c "echo '{{ ssh_public_key }}' >> /root/.ssh/authorized_keys"
+    - curtin in-target -- mkdir -p /etc/openvpn
+    - curtin in-target -- sh -c "echo '{{ ca_cert }}' > /etc/openvpn/ca.crt"
+    - curtin in-target -- sh -c "echo '{{ client_cert }}' > /etc/openvpn/client.crt"
+    - curtin in-target -- sh -c "echo '{{ client_key }}' > /etc/openvpn/client.key"
+    - curtin in-target -- sh -c "wget -O /tmp/init.sh http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/init.sh && chmod +x /tmp/init.sh && /tmp/init.sh"
+    - curtin in-target -- wget -qO- http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/callback

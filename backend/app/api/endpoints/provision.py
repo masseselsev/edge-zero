@@ -73,6 +73,40 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
         media_type="text/plain"
     )
 
+@router.get("/{mac}/user-data")
+async def get_user_data(mac: str, request: Request, db: AsyncSession = Depends(get_db)):
+    # Same logic as preseed but for Ubuntu
+    result = await db.execute(select(Box).where(Box.mac_address == cast(mac, MACADDR)))
+    box = result.scalars().first()
+    if not box:
+        raise HTTPException(status_code=404, detail="Box not found")
+    result_vpn = await db.execute(select(VpnCredential).where(VpnCredential.box_id == box.id))
+    vpn = result_vpn.scalars().first()
+
+    context = {
+        "request": request,
+        "mac_address": mac,
+        "api_host": settings.API_HOST,
+        "api_port": settings.API_PORT,
+        "ip_address": box.ip_address,
+        "gateway": "192.168.188.1", 
+        "dns": "8.8.8.8",
+        "ssh_public_key": "ssh-rsa AAAA...", 
+        "ca_cert": vpn.ca_cert if vpn else "",
+        "client_cert": vpn.client_cert if vpn else "",
+        "client_key": vpn.client_key if vpn else ""
+    }
+    
+    return templates.TemplateResponse(
+        "user-data.j2", 
+        context,
+        media_type="text/plain"
+    )
+
+@router.get("/{mac}/meta-data")
+async def get_meta_data(mac: str):
+    return Response(content="instance-id: overwatch-box\n", media_type="text/plain")
+
 from app.models.init_script import InitScript
 from app.services.telegram import send_telegram_message
 import os
