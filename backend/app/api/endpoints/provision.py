@@ -131,12 +131,31 @@ async def get_boot_ipxe(mac: str, db: AsyncSession = Depends(get_db)):
         if box.os_image:
             image_dir = box.os_image.filename.replace(".iso", "").replace(".ISO", "")
         
-        kernel = f"tftp://${{next-server}}/images/{image_dir}/vmlinuz"
-        initrd = f"tftp://${{next-server}}/images/{image_dir}/initrd.gz"
+        # Auto-detect kernel and initrd filenames in the directory
+        # We check the directory on the filesystem
+        img_path = os.path.join("/mnt/infra_config/tftp/images", image_dir)
+        kernel_file = "vmlinuz"
+        initrd_file = "initrd.gz"
+        
+        if os.path.exists(img_path):
+            files = os.listdir(img_path)
+            # Find kernel (vmlinuz or linux)
+            for f in ["vmlinuz", "linux"]:
+                if f in files:
+                    kernel_file = f
+                    break
+            # Find initrd (initrd, initrd.gz, initrd.lz)
+            for f in ["initrd", "initrd.gz", "initrd.lz"]:
+                if f in files:
+                    initrd_file = f
+                    break
+
+        kernel = f"tftp://${{next-server}}/images/{image_dir}/{kernel_file}"
+        initrd = f"tftp://${{next-server}}/images/{image_dir}/{initrd_file}"
         
         script = f"""#!ipxe
 echo Starting Overwatch Network Installer for MAC {mac}
-echo Using image: {image_dir}
+echo Using image: {image_dir} (Kernel: {kernel_file}, Initrd: {initrd_file})
 kernel {kernel} auto=true priority=critical url={preseed_url} interface=auto
 initrd {initrd}
 boot
