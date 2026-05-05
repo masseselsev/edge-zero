@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
     
-    API_HOST: str = "127.0.0.1"
+    API_HOST: str = "192.168.222.2"
     API_PORT: int = 8000
 
     model_config = SettingsConfigDict(case_sensitive=True)
