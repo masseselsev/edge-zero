@@ -188,10 +188,20 @@ async def get_boot_ipxe(mac: str, db: AsyncSession = Depends(get_db)):
         initrd = f"tftp://${{next-server}}/images/{image_dir}/{initrd_file}"
         iso_url = f"http://{settings.API_HOST}:{settings.API_PORT}/isos/{box.os_image.filename}"
         
+        # Build kernel command line based on OS type
+        # os_type is usually an Enum, let's check its value
+        from app.models.os_image import OsType
+        
+        if box.os_image.os_type == OsType.UBUNTU:
+            cmdline = f"initrd={initrd_file} ip=dhcp url={iso_url} autoinstall ds=nocloud-net;s=http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{mac}/"
+        else:
+            # Debian / Other
+            cmdline = f"initrd={initrd_file} auto=true priority=critical url=http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{mac}/preseed.cfg interface=auto"
+
         script = f"""#!ipxe
 echo Starting Overwatch Network Installer for MAC {mac}
-echo Using image: {image_dir} (Kernel: {kernel_file}, Initrd: {initrd_file})
-kernel {kernel} initrd={initrd_file} ip=dhcp url={iso_url} autoinstall ds=nocloud-net;s=http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{mac}/ auto=true priority=critical url={preseed_url} interface=auto
+echo Using image: {image_dir} (Type: {box.os_image.os_type})
+kernel {kernel} {cmdline}
 initrd {initrd}
 boot
 """
