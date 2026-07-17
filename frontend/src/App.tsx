@@ -11,7 +11,13 @@ import SettingsTab from './components/SettingsTab';
 import { Loader2 } from 'lucide-react';
 
 export function AppContent() {
-  const [activeTab, setActiveTab] = useState('inventory');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('activeTab') || 'inventory';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('activeTab', activeTab);
+  }, [activeTab]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -61,6 +67,8 @@ export function AppContent() {
       console.error('Logout error:', err);
     } finally {
       localStorage.removeItem('token');
+      localStorage.removeItem('activeTab');
+      setActiveTab('inventory');
       setCurrentUser(null);
       setIsAuthenticated(false);
     }
