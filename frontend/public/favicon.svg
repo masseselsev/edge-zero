@@ -2,12 +2,10 @@
   <style>
     @keyframes eyePulse {
       0%, 100% {
-        opacity: 0.65;
-        transform: scale(0.88);
+        transform: scale(0.92);
       }
       50% {
-        opacity: 1;
-        transform: scale(1.04);
+        transform: scale(1.05);
       }
     }
     .pulse-layer {
@@ -16,15 +14,19 @@
     }
   </style>
   
-  <!-- Solid background matching body-bg (#0b0f19) to ensure contrast in browser tabs -->
+  <!-- Solid background matching body-bg (#0b0f19) -->
   <rect width="32" height="32" rx="9" fill="#0b0f19"/>
   
-  <!-- Outer container matching the header logo rounded-xl card border -->
-  <rect x="2" y="2" width="28" height="28" rx="8" fill="#4f46e5" fill-opacity="0.1" stroke="#6366f1" stroke-width="1.8" stroke-opacity="0.3"/>
+  <!-- Outer container card matching the header logo border -->
+  <rect x="2" y="2" width="28" height="28" rx="8" fill="#4f46e5" fill-opacity="0.1" stroke="#6366f1" stroke-width="1.8" stroke-opacity="0.45"/>
   
-  <!-- Exact Lucide Eye shape from the header logo, scaled to 24px and centered -->
-  <g class="pulse-layer" transform="translate(4, 4)">
-    <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="12" cy="12" r="3" fill="none" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Centered pulsing group -->
+  <g class="pulse-layer">
+    <!-- Translated group centering 24x24 icon inside 32x32 viewbox -->
+    <g transform="translate(4, 4)">
+      <!-- Symmetrical Lucide Eye icon with bright indigo stroke -->
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" fill="none" stroke="#a5b4fc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="12" r="3" fill="none" stroke="#a5b4fc" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
   </g>
 </svg>
