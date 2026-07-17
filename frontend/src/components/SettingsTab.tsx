@@ -57,14 +57,17 @@ export default function SettingsTab() {
   }
 
   // Find or default some common settings
-  const project_name = settings.find(s => s.key === 'PROJECT_NAME')?.value || 'Overwatch';
+  const project_name = settings.find(s => s.key === 'PROJECT_NAME')?.value || 'Edge Z.E.R.O.';
   const api_host = settings.find(s => s.key === 'API_HOST')?.value || '192.168.222.2';
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('settingsTitle')}</h1>
-        <p className="text-zinc-400 text-xs mt-1">{t('settingsSub')}</p>
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-100">{t('settingsTitle')}</h2>
+          <p className="text-zinc-400 text-xs mt-1">{t('settingsSub')}</p>
+        </div>
       </div>
 
       <div className="max-w-xl bg-zinc-900/30 border border-zinc-800 p-6 rounded-xl shadow-sm">
@@ -75,7 +78,7 @@ export default function SettingsTab() {
               type="text"
               value={project_name}
               onChange={(e) => updateSettingValue('PROJECT_NAME', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-850 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+              className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
             />
           </div>
 
@@ -85,7 +88,7 @@ export default function SettingsTab() {
               type="text"
               value={api_host}
               onChange={(e) => updateSettingValue('API_HOST', e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-850 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+              className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
             />
           </div>
 

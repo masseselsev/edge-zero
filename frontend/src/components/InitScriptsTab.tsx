@@ -78,42 +78,45 @@ export default function InitScriptsTab() {
   };
 
   if (loading) {
-    return <div className="text-zinc-500 text-sm animate-pulse">{t('loading')}</div>;
+    return <div className="text-zinc-505 text-sm animate-pulse">{t('loading')}</div>;
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('tabInitScripts')}</h1>
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-100">{t('tabInitScripts')}</h2>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Scripts list */}
         <div className="lg:col-span-2 space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Uploaded Init Scripts</h3>
-          <div className="overflow-hidden border border-zinc-800 bg-zinc-950/40 rounded-xl">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-zinc-900/60 border-b border-zinc-800 text-zinc-400 font-bold">
-                  <th className="p-3">Filename</th>
-                  <th className="p-3">Hardware Compatibility / Comment</th>
-                  <th className="p-3 text-right">Action</th>
+          <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
+            <table className="min-w-full divide-y divide-zinc-800 text-left text-sm text-zinc-300">
+              <thead className="bg-zinc-905 text-xs uppercase tracking-wider text-zinc-400">
+                <tr className="border-b border-zinc-805 text-zinc-400 font-bold">
+                  <th className="px-6 py-3">Filename</th>
+                  <th className="px-6 py-3">Hardware Compatibility / Comment</th>
+                  <th className="px-6 py-3 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/60">
+              <tbody className="divide-y divide-zinc-800">
                 {scripts.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="p-4 text-center text-zinc-500 italic">No init scripts found.</td>
+                    <td colSpan={3} className="px-6 py-8 text-center text-zinc-500 italic">No init scripts found.</td>
                   </tr>
                 ) : (
                   scripts.map((script) => (
                     <tr key={script.id} className="hover:bg-zinc-900/20 text-zinc-300">
-                      <td className="p-3 font-mono font-semibold text-indigo-400 flex items-center gap-2">
+                      <td className="px-6 py-4 font-mono font-semibold text-indigo-400 flex items-center gap-2">
                         <FileCode size={13} className="text-zinc-500" />
                         <span>{script.filename}</span>
                       </td>
-                      <td className="p-3 text-zinc-450">{script.hardware_comment || '—'}</td>
-                      <td className="p-3 text-right">
+                      <td className="px-6 py-4 text-zinc-450">{script.hardware_comment || '—'}</td>
+                      <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => handleDelete(script.id)}
                           className="p-1.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-rose-450 rounded cursor-pointer"
@@ -131,26 +134,26 @@ export default function InitScriptsTab() {
         </div>
 
         {/* Upload Form */}
-        <div className="bg-zinc-900/30 border border-zinc-800 p-5 rounded-xl space-y-4">
+        <div className="bg-zinc-905 border border-zinc-800 p-5 rounded-xl space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Upload Script</h3>
           <form onSubmit={handleUpload} className="space-y-4">
             <div>
-              <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Select Script File</label>
+              <label className="block text-[10px] uppercase font-bold text-zinc-505 mb-1">Select Script File</label>
               <input
                 type="file"
                 required
                 onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
-                className="w-full text-xs bg-zinc-950 border border-zinc-850 p-2.5 rounded-lg text-zinc-400"
+                className="w-full text-xs bg-zinc-950 border border-zinc-800 p-2.5 rounded-lg text-zinc-400"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Hardware / Compatibility Comment</label>
+              <label className="block text-[10px] uppercase font-bold text-zinc-505 mb-1">Hardware / Compatibility Comment</label>
               <input
                 type="text"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-850 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
                 placeholder="e.g. For NVIDIA Jetson Box templates"
               />
             </div>

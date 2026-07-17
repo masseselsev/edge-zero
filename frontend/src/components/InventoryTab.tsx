@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../context/TranslationContext';
-import { Search, Plus, Trash2, Edit } from 'lucide-react';
+import { Search, Plus, Trash2 } from 'lucide-react';
 
 interface Location {
   id: string;
@@ -86,11 +86,11 @@ export default function InventoryTab() {
 
   const getStatusBadge = (status: Box['status']) => {
     const badges = {
-      NEW: 'bg-zinc-800 text-zinc-400 border-zinc-700/50',
-      STAGING: 'bg-indigo-950/20 text-indigo-400 border-indigo-900/30',
-      INSTALLING: 'bg-amber-950/20 text-amber-400 border-amber-900/30',
-      ACTIVE: 'bg-emerald-950/20 text-emerald-400 border-emerald-900/30',
-      MAINTENANCE: 'bg-rose-950/20 text-rose-450 border-rose-900/30'
+      NEW: 'bg-zinc-950 text-zinc-500 border-zinc-800',
+      STAGING: 'bg-indigo-950/40 text-indigo-400 border-indigo-900/30',
+      INSTALLING: 'bg-amber-950/40 text-amber-400 border-amber-900/30',
+      ACTIVE: 'bg-emerald-950/40 text-emerald-400 border-emerald-900/30',
+      MAINTENANCE: 'bg-rose-950/40 text-rose-450 border-rose-900/30'
     };
     return (
       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badges[status] || badges.NEW}`}>
@@ -105,72 +105,76 @@ export default function InventoryTab() {
     (box.ip_address && box.ip_address.includes(search))
   );
 
-  if (loading) {
-    return <div className="text-zinc-500 text-sm animate-pulse">{t('loading')}</div>;
-  }
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* Title & Actions Row */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('inventoryTitle')}</h1>
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-100">{t('inventoryTitle')}</h2>
           <p className="text-zinc-400 text-xs mt-1">{t('inventorySub')}</p>
         </div>
-        
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-3.5 py-1.8 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-[0_0_12px_rgba(99,102,241,0.2)] hover:shadow-[0_0_16px_rgba(99,102,241,0.4)]"
-        >
-          <Plus size={14} />
-          <span>{t('addBox')}</span>
-        </button>
+        <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold text-xs transition-colors self-stretch sm:self-auto justify-center cursor-pointer shadow-md"
+          >
+            <Plus size={16} />
+            <span>{t('addBox')}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 w-full max-w-md shadow-sm">
-        <Search size={14} className="text-zinc-500 mr-2" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t('searchPlaceholder')}
-          className="bg-transparent border-none outline-none text-xs text-zinc-200 placeholder-zinc-500 w-full"
-        />
+      {/* Filter & Search Toolbar */}
+      <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-zinc-900/40 p-4 rounded-xl border border-zinc-800">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('searchPlaceholder')}
+            className="w-full pl-9 pr-4 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 text-sm placeholder-zinc-500 focus:border-indigo-500 focus:outline-none"
+          />
+        </div>
       </div>
 
       {/* Data Table */}
-      <div className="overflow-hidden border border-zinc-800/80 bg-zinc-950/40 rounded-xl shadow-sm">
-        <table className="w-full text-left border-collapse text-xs">
-          <thead>
-            <tr className="bg-zinc-900/60 border-b border-zinc-800 text-zinc-400 font-bold">
-              <th className="p-4">Internal SN</th>
-              <th className="p-4">{t('macAddress')}</th>
-              <th className="p-4">{t('ipAddress')}</th>
-              <th className="p-4">{t('location')}</th>
-              <th className="p-4">{t('status')}</th>
-              <th className="p-4 text-right">{t('actions')}</th>
+      <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
+        <table className="min-w-full divide-y divide-zinc-800 text-left text-sm text-zinc-300">
+          <thead className="bg-zinc-900 text-xs uppercase tracking-wider text-zinc-400">
+            <tr>
+              <th className="px-6 py-3 font-semibold">Internal SN</th>
+              <th className="px-6 py-3 font-semibold">{t('macAddress')}</th>
+              <th className="px-6 py-3 font-semibold">{t('ipAddress')}</th>
+              <th className="px-6 py-3 font-semibold">{t('location')}</th>
+              <th className="px-6 py-3 font-semibold">{t('status')}</th>
+              <th className="px-6 py-3 text-right font-semibold">{t('actions')}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-800/60">
-            {filteredBoxes.length === 0 ? (
+          <tbody className="divide-y divide-zinc-800">
+            {loading ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-zinc-500 italic">No devices found.</td>
+                <td colSpan={6} className="px-6 py-8 text-center text-zinc-500 italic animate-pulse">{t('loading')}</td>
+              </tr>
+            ) : filteredBoxes.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-8 text-center text-zinc-500 italic">No devices found.</td>
               </tr>
             ) : (
               filteredBoxes.map((box) => (
                 <tr key={box.id} className="hover:bg-zinc-900/20 text-zinc-300">
-                  <td className="p-4 font-bold text-zinc-200">{box.internal_sn}</td>
-                  <td className="p-4 font-mono">{box.mac_address}</td>
-                  <td className="p-4 font-mono">{box.ip_address || '—'}</td>
-                  <td className="p-4">{box.location ? box.location.name : '—'}</td>
-                  <td className="p-4">{getStatusBadge(box.status)}</td>
-                  <td className="p-4 text-right flex items-center justify-end gap-2">
+                  <td className="px-6 py-4 font-bold text-zinc-200">{box.internal_sn}</td>
+                  <td className="px-6 py-4 font-mono">{box.mac_address}</td>
+                  <td className="px-6 py-4 font-mono text-zinc-400">{box.ip_address || '—'}</td>
+                  <td className="px-6 py-4">{box.location ? box.location.name : '—'}</td>
+                  <td className="px-6 py-4">{getStatusBadge(box.status)}</td>
+                  <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
                     <button
                       onClick={() => handleDeleteBox(box.id)}
                       className="p-1.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-rose-450 hover:text-rose-400 rounded transition-all cursor-pointer"
                       title={t('delete')}
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={14} />
                     </button>
                   </td>
                 </tr>

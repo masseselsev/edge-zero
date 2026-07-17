@@ -61,9 +61,11 @@ export default function DashboardTab() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('dashboardTitle')}</h1>
-        <p className="text-zinc-400 text-xs mt-1">{t('dashboardSub')}</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-100">{t('dashboardTitle')}</h2>
+          <p className="text-zinc-400 text-xs mt-1">{t('dashboardSub')}</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

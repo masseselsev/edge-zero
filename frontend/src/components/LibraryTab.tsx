@@ -159,8 +159,11 @@ export default function LibraryTab() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('tabLibrary')}</h1>
+      {/* Title block */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-100">{t('tabLibrary')}</h2>
+        </div>
       </div>
 
       {/* Sub-tabs Row */}
@@ -168,7 +171,7 @@ export default function LibraryTab() {
         <button
           onClick={() => setSubTab('images')}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            subTab === 'images' ? 'bg-zinc-900 border border-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
+            subTab === 'images' ? 'bg-zinc-900 border border-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-350'
           }`}
         >
           <Disc size={13} />
@@ -177,7 +180,7 @@ export default function LibraryTab() {
         <button
           onClick={() => setSubTab('components')}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            subTab === 'components' ? 'bg-zinc-900 border border-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
+            subTab === 'components' ? 'bg-zinc-900 border border-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-350'
           }`}
         >
           <Layers size={13} />
@@ -186,7 +189,7 @@ export default function LibraryTab() {
         <button
           onClick={() => setSubTab('templates')}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-            subTab === 'templates' ? 'bg-zinc-900 border border-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
+            subTab === 'templates' ? 'bg-zinc-900 border border-zinc-800 text-zinc-100' : 'text-zinc-500 hover:text-zinc-350'
           }`}
         >
           <Library size={13} />
@@ -199,32 +202,32 @@ export default function LibraryTab() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Available Images</h3>
-            <div className="overflow-hidden border border-zinc-800 bg-zinc-950/40 rounded-xl">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-zinc-900/60 border-b border-zinc-800 text-zinc-400 font-bold">
-                    <th className="p-3">Filename</th>
-                    <th className="p-3">OS Type</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3 text-right">Action</th>
+            <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
+              <table className="min-w-full divide-y divide-zinc-800 text-left text-sm text-zinc-300">
+                <thead className="bg-zinc-900 text-xs uppercase tracking-wider text-zinc-400">
+                  <tr className="border-b border-zinc-800 text-zinc-400 font-bold">
+                    <th className="px-6 py-3">Filename</th>
+                    <th className="px-6 py-3">OS Type</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800/60">
+                <tbody className="divide-y divide-zinc-800">
                   {images.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="p-4 text-center text-zinc-500 italic">No ISO images uploaded.</td>
+                      <td colSpan={4} className="px-6 py-8 text-center text-zinc-500 italic">No ISO images uploaded.</td>
                     </tr>
                   ) : (
                     images.map(img => (
                       <tr key={img.id} className="hover:bg-zinc-900/20 text-zinc-300">
-                        <td className="p-3 font-bold text-zinc-200">{img.filename}</td>
-                        <td className="p-3">{img.os_type}</td>
-                        <td className="p-3">
+                        <td className="px-6 py-4 font-bold text-zinc-200">{img.filename}</td>
+                        <td className="px-6 py-4">{img.os_type}</td>
+                        <td className="px-6 py-4">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                             img.status === 'SUCCESS' ? 'bg-emerald-950/20 text-emerald-400 border border-emerald-900/30' : 'bg-zinc-900 text-zinc-400'
                           }`}>{img.status}</span>
                         </td>
-                        <td className="p-3 text-right">
+                        <td className="px-6 py-4 text-right">
                           <button
                             onClick={() => handleDeleteImage(img.id)}
                             className="p-1.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-rose-450 rounded cursor-pointer"
@@ -241,7 +244,7 @@ export default function LibraryTab() {
           </div>
 
           {/* Upload Form */}
-          <div className="bg-zinc-900/30 border border-zinc-800 p-5 rounded-xl space-y-4">
+          <div className="bg-zinc-905 border border-zinc-800 p-5 rounded-xl space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Upload new ISO</h3>
             <form onSubmit={handleUploadIso} className="space-y-4">
               <div>
@@ -251,7 +254,7 @@ export default function LibraryTab() {
                   required
                   accept=".iso,.ISO"
                   onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
-                  className="w-full text-xs bg-zinc-950 border border-zinc-850 p-2.5 rounded-lg text-zinc-400"
+                  className="w-full text-xs bg-zinc-950 border border-zinc-800 p-2.5 rounded-lg text-zinc-400"
                 />
               </div>
 
@@ -260,7 +263,7 @@ export default function LibraryTab() {
                 <select
                   value={osType}
                   onChange={(e) => setOsType(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-850 text-xs text-zinc-200 p-2.5 rounded-lg outline-none cursor-pointer"
+                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none cursor-pointer"
                 >
                   <option value="DEBIAN">Debian</option>
                   <option value="UBUNTU">Ubuntu</option>
@@ -285,28 +288,28 @@ export default function LibraryTab() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Component Definitions</h3>
-            <div className="overflow-hidden border border-zinc-800 bg-zinc-950/40 rounded-xl">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-zinc-900/60 border-b border-zinc-800 text-zinc-400 font-bold">
-                    <th className="p-3">Name</th>
-                    <th className="p-3">Model</th>
-                    <th className="p-3">Description</th>
-                    <th className="p-3 text-right">Action</th>
+            <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
+              <table className="min-w-full divide-y divide-zinc-800 text-left text-sm text-zinc-300">
+                <thead className="bg-zinc-900 text-xs uppercase tracking-wider text-zinc-400">
+                  <tr className="border-b border-zinc-800 text-zinc-400 font-bold">
+                    <th className="px-6 py-3">Name</th>
+                    <th className="px-6 py-3">Model</th>
+                    <th className="px-6 py-3">Description</th>
+                    <th className="px-6 py-3 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800/60">
+                <tbody className="divide-y divide-zinc-800">
                   {components.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="p-4 text-center text-zinc-500 italic">No component definitions found.</td>
+                      <td colSpan={4} className="px-6 py-8 text-center text-zinc-500 italic">No component definitions found.</td>
                     </tr>
                   ) : (
                     components.map(comp => (
                       <tr key={comp.id} className="hover:bg-zinc-900/20 text-zinc-300">
-                        <td className="p-3 font-bold text-zinc-200">{comp.name}</td>
-                        <td className="p-3">{comp.model}</td>
-                        <td className="p-3 text-zinc-450">{comp.description || '—'}</td>
-                        <td className="p-3 text-right">
+                        <td className="px-6 py-4 font-bold text-zinc-200">{comp.name}</td>
+                        <td className="px-6 py-4">{comp.model}</td>
+                        <td className="px-6 py-4 text-zinc-400">{comp.description || '—'}</td>
+                        <td className="px-6 py-4 text-right">
                           <button
                             onClick={() => handleDeleteComponent(comp.id)}
                             className="p-1.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-rose-450 rounded cursor-pointer"
@@ -323,7 +326,7 @@ export default function LibraryTab() {
           </div>
 
           {/* Add Component Form */}
-          <div className="bg-zinc-900/30 border border-zinc-800 p-5 rounded-xl space-y-4">
+          <div className="bg-zinc-905 border border-zinc-800 p-5 rounded-xl space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Add component type</h3>
             <form onSubmit={handleAddComponent} className="space-y-4">
               <div>
@@ -333,7 +336,7 @@ export default function LibraryTab() {
                   required
                   value={newComponent.name}
                   onChange={(e) => setNewComponent({...newComponent, name: e.target.value})}
-                  className="w-full bg-zinc-950 border border-zinc-850 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
                   placeholder="e.g. HDD 2TB"
                 />
               </div>
@@ -345,7 +348,7 @@ export default function LibraryTab() {
                   required
                   value={newComponent.model}
                   onChange={(e) => setNewComponent({...newComponent, model: e.target.value})}
-                  className="w-full bg-zinc-950 border border-zinc-850 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
                   placeholder="e.g. Seagate ST2000LM015"
                 />
               </div>
@@ -355,7 +358,7 @@ export default function LibraryTab() {
                 <textarea
                   value={newComponent.description}
                   onChange={(e) => setNewComponent({...newComponent, description: e.target.value})}
-                  className="w-full bg-zinc-950 border border-zinc-850 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
                   placeholder="Optional details"
                 />
               </div>
@@ -377,26 +380,26 @@ export default function LibraryTab() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Template Groups</h3>
-            <div className="overflow-hidden border border-zinc-800 bg-zinc-950/40 rounded-xl">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-zinc-900/60 border-b border-zinc-800 text-zinc-400 font-bold">
-                    <th className="p-3">Name</th>
-                    <th className="p-3">Description</th>
-                    <th className="p-3 text-right">Action</th>
+            <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
+              <table className="min-w-full divide-y divide-zinc-800 text-left text-sm text-zinc-300">
+                <thead className="bg-zinc-900 text-xs uppercase tracking-wider text-zinc-400">
+                  <tr className="border-b border-zinc-800 text-zinc-400 font-bold">
+                    <th className="px-6 py-3">Name</th>
+                    <th className="px-6 py-3">Description</th>
+                    <th className="px-6 py-3 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-800/60">
+                <tbody className="divide-y divide-zinc-800">
                   {groups.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="p-4 text-center text-zinc-500 italic">No template groups found.</td>
+                      <td colSpan={3} className="px-6 py-8 text-center text-zinc-500 italic">No template groups found.</td>
                     </tr>
                   ) : (
                     groups.map(grp => (
                       <tr key={grp.id} className="hover:bg-zinc-900/20 text-zinc-300">
-                        <td className="p-3 font-bold text-zinc-200">{grp.name}</td>
-                        <td className="p-3 text-zinc-450">{grp.description || '—'}</td>
-                        <td className="p-3 text-right">
+                        <td className="px-6 py-4 font-bold text-zinc-200">{grp.name}</td>
+                        <td className="px-6 py-4 text-zinc-400">{grp.description || '—'}</td>
+                        <td className="px-6 py-4 text-right">
                           <button
                             onClick={() => handleDeleteGroup(grp.id)}
                             className="p-1.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-rose-450 rounded cursor-pointer"
@@ -413,7 +416,7 @@ export default function LibraryTab() {
           </div>
 
           {/* Add Group Form */}
-          <div className="bg-zinc-900/30 border border-zinc-800 p-5 rounded-xl space-y-4">
+          <div className="bg-zinc-905 border border-zinc-800 p-5 rounded-xl space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Create Template Group</h3>
             <form onSubmit={handleAddGroup} className="space-y-4">
               <div>
@@ -423,7 +426,7 @@ export default function LibraryTab() {
                   required
                   value={newGroup.name}
                   onChange={(e) => setNewGroup({...newGroup, name: e.target.value})}
-                  className="w-full bg-zinc-950 border border-zinc-850 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
                   placeholder="e.g. Standard Video-Box"
                 />
               </div>
@@ -433,7 +436,7 @@ export default function LibraryTab() {
                 <textarea
                   value={newGroup.description}
                   onChange={(e) => setNewGroup({...newGroup, description: e.target.value})}
-                  className="w-full bg-zinc-950 border border-zinc-850 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
                   placeholder="Optional details"
                 />
               </div>

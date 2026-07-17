@@ -3,7 +3,7 @@ export type Language = 'en' | 'uk' | 'ru';
 export const translations: Record<Language, Record<string, string>> = {
   en: {
     tabDashboard: 'Dashboard',
-    tabInventory: 'Inventory',
+    tabInventory: 'Fleet',
     tabLibrary: 'Library',
     tabInitScripts: 'Init Scripts',
     tabLogs: 'Logs',
@@ -23,10 +23,10 @@ export const translations: Record<Language, Record<string, string>> = {
     activeAlerts: 'Active Alerts',
     
     // Inventory Tab
-    inventoryTitle: 'Inventory',
-    inventorySub: 'Manage industrial edge devices',
+    inventoryTitle: 'Managed Nodes',
+    inventorySub: 'Deploy, configure, and provision industrial edge fleet.',
     searchPlaceholder: 'Search by hostname, IP address...',
-    addBox: 'Add Box',
+    addBox: 'Add Node',
     macAddress: 'MAC Address',
     ipAddress: 'IP Address',
     location: 'Location',
@@ -53,7 +53,7 @@ export const translations: Record<Language, Record<string, string>> = {
   },
   uk: {
     tabDashboard: 'Панель приладів',
-    tabInventory: 'Інвентар',
+    tabInventory: 'Вузли (Fleet)',
     tabLibrary: 'Бібліотека',
     tabInitScripts: 'Скрипти ініціалізації',
     tabLogs: 'Журнали',
@@ -73,10 +73,10 @@ export const translations: Record<Language, Record<string, string>> = {
     activeAlerts: 'Активні сповіщення',
     
     // Inventory Tab
-    inventoryTitle: 'Інвентар',
-    inventorySub: 'Управління промисловими крайовими пристроями',
+    inventoryTitle: 'Керовані вузли',
+    inventorySub: 'Розгортання, налаштування та конфігурація промислового крайового флоту.',
     searchPlaceholder: 'Пошук за ім\'ям хоста, IP-адресою...',
-    addBox: 'Додати Box',
+    addBox: 'Додати вузол',
     macAddress: 'MAC-адреса',
     ipAddress: 'IP-адреса',
     location: 'Розташування',
@@ -103,7 +103,7 @@ export const translations: Record<Language, Record<string, string>> = {
   },
   ru: {
     tabDashboard: 'Панель',
-    tabInventory: 'Инвентарь',
+    tabInventory: 'Узлы (Fleet)',
     tabLibrary: 'Библиотека',
     tabInitScripts: 'Скрипты инициализации',
     tabLogs: 'Журналы',
@@ -123,10 +123,10 @@ export const translations: Record<Language, Record<string, string>> = {
     activeAlerts: 'Активные уведомления',
     
     // Inventory Tab
-    inventoryTitle: 'Инвентарь',
-    inventorySub: 'Управление промышленными краевыми устройствами',
+    inventoryTitle: 'Управляемые узлы',
+    inventorySub: 'Развертывание, настройка и конфигурация промышленного краевого флота.',
     searchPlaceholder: 'Поиск по имени хоста, IP-адресу...',
-    addBox: 'Добавить Box',
+    addBox: 'Добавить узел',
     macAddress: 'MAC-адрес',
     ipAddress: 'IP-адрес',
     location: 'Расположение',
