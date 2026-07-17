@@ -1,6 +1,7 @@
 import os
 import time
-from fastapi import APIRouter, Depends
+import uuid
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select
 from typing import List, Optional
@@ -11,6 +12,9 @@ from app.models.system_settings import SystemSettings
 from app.models.system_log import SystemLog
 from app.models.audit_log import AuditLog
 from app.schemas.log import SystemLogSchema, AuditLogSchema
+from app.models.user import User
+from app.api import deps
+from app.core import security
 
 router = APIRouter()
 
@@ -213,3 +217,71 @@ async def get_debug_logs(db: AsyncSession = Depends(get_db)):
 async def get_audit_logs(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(AuditLog).order_by(AuditLog.created_at.desc()).limit(1000))
     return result.scalars().all()
+
+# User management schemas
+class UserCreateSchema(BaseModel):
+    username: str
+    password: str
+    role: str = "administrator"
+    telegram_id: Optional[str] = None
+
+class UserResponseSchema(BaseModel):
+    id: uuid.UUID
+    username: str
+    role: str
+    telegram_id: Optional[str] = None
+    class Config:
+        from_attributes = True
+
+# User management endpoints
+@router.get("/users", response_model=List[UserResponseSchema])
+async def get_users(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    result = await db.execute(select(User).order_by(User.username))
+    return result.scalars().all()
+
+@router.post("/users", response_model=UserResponseSchema)
+async def create_user(
+    user_in: UserCreateSchema,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    result = await db.execute(select(User).where(User.username == user_in.username))
+    if result.scalars().first():
+        raise HTTPException(status_code=400, detail="Username already exists")
+    
+    new_user = User(
+        username=user_in.username,
+        hashed_password=security.get_password_hash(user_in.password),
+        role=user_in.role,
+        telegram_id=user_in.telegram_id
+    )
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+    return new_user
+
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID format")
+    
+    if current_user.id == user_uuid:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    result = await db.execute(select(User).where(User.id == user_uuid))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.delete(user)
+    await db.commit()
+    return {"status": "success"}

@@ -10,3 +10,4 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     telegram_id = Column(String, nullable=True) # Used for password recovery
+    role = Column(String, default="administrator", nullable=False)

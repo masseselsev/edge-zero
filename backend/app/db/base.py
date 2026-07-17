@@ -12,4 +12,5 @@ from app.models.component_definition import ComponentDefinition  # noqa
 from app.models.location import Location  # noqa
 from app.models.system_log import SystemLog  # noqa
 from app.models.audit_log import AuditLog  # noqa
+from app.models.user import User  # noqa
 
