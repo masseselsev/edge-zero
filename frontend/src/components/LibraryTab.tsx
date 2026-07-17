@@ -38,6 +38,7 @@ export default function LibraryTab() {
   const [osType, setOsType] = useState('DEBIAN');
   const [isActive, setIsActive] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const [newComponent, setNewComponent] = useState({
     name: '',
@@ -72,31 +73,45 @@ export default function LibraryTab() {
   }, []);
 
   // Upload ISO
-  const handleUploadIso = async (e: React.FormEvent) => {
+  const handleUploadIso = (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadFile) return;
     setUploading(true);
+    setUploadProgress(0);
+
     const formData = new FormData();
     formData.append('file', uploadFile);
     formData.append('os_type', osType);
     formData.append('is_active', String(isActive));
 
-    try {
-      const res = await fetch('/api/library/images', {
-        method: 'POST',
-        body: formData
-      });
-      if (res.ok) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/library/images');
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percentComplete);
+      }
+    };
+
+    xhr.onload = () => {
+      setUploading(false);
+      setUploadProgress(null);
+      if (xhr.status >= 200 && xhr.status < 300) {
         setUploadFile(null);
         fetchData();
       } else {
         alert('Failed to upload ISO image.');
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
+    };
+
+    xhr.onerror = () => {
       setUploading(false);
-    }
+      setUploadProgress(null);
+      alert('Upload failed due to a network error.');
+    };
+
+    xhr.send(formData);
   };
 
   // Add Component Definition
@@ -250,6 +265,7 @@ export default function LibraryTab() {
               <div>
                 <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Select ISO File</label>
                 <input
+                  key={uploadFile ? 'loaded' : 'empty'}
                   type="file"
                   required
                   accept=".iso,.ISO"
@@ -269,6 +285,21 @@ export default function LibraryTab() {
                   <option value="UBUNTU">Ubuntu</option>
                 </select>
               </div>
+
+              {uploading && uploadProgress !== null && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[10px] text-zinc-400 font-bold uppercase">
+                    <span>Uploading...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-zinc-950 rounded-full h-1.5 overflow-hidden border border-zinc-800">
+                    <div 
+                      className="bg-indigo-500 h-1.5 transition-all duration-150" 
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"
