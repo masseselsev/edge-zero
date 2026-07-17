@@ -8,7 +8,7 @@ import InitScriptsTab from './components/InitScriptsTab';
 import LogsTab from './components/LogsTab';
 import SettingsTab from './components/SettingsTab';
 
-export default function AppContent() {
+export function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const renderContent = () => {
@@ -37,7 +37,7 @@ export default function AppContent() {
   );
 }
 
-export function App() {
+export default function App() {
   return (
     <TranslationProvider>
       <AppContent />
