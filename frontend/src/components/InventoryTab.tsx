@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../context/TranslationContext';
-import { Search, Plus, Trash2 } from 'lucide-react';
+import { Search, Plus, Trash2, Server, PlayCircle, AlertTriangle } from 'lucide-react';
 
 interface Location {
   id: string;
@@ -22,6 +22,11 @@ export default function InventoryTab() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [stats, setStats] = useState({
+    total_boxes: 0,
+    pending_provision: 0,
+    active_alerts: 0
+  });
   
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -34,12 +39,14 @@ export default function InventoryTab() {
 
   const fetchData = async () => {
     try {
-      const [boxRes, locRes] = await Promise.all([
+      const [boxRes, locRes, statsRes] = await Promise.all([
         fetch('/api/boxes/'),
-        fetch('/api/locations/')
+        fetch('/api/locations/'),
+        fetch('/api/boxes/stats')
       ]);
       if (boxRes.ok) setBoxes(await boxRes.json());
       if (locRes.ok) setLocations(await locRes.json());
+      if (statsRes.ok) setStats(await statsRes.json());
     } catch (err) {
       console.error('Failed to fetch inventory:', err);
     } finally {
@@ -122,6 +129,40 @@ export default function InventoryTab() {
             <span>{t('addBox')}</span>
           </button>
         </div>
+      </div>
+
+      {/* Overview Stats Header */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          {
+            label: t('totalDevices'),
+            value: stats.total_boxes,
+            icon: <Server className="text-indigo-400" size={16} />,
+            bg: 'bg-zinc-900 border-zinc-800'
+          },
+          {
+            label: t('pendingProvision'),
+            value: stats.pending_provision,
+            icon: <PlayCircle className="text-amber-400" size={16} />,
+            bg: 'bg-zinc-900 border-zinc-800'
+          },
+          {
+            label: t('activeAlerts'),
+            value: stats.active_alerts,
+            icon: <AlertTriangle className="text-rose-400" size={16} />,
+            bg: stats.active_alerts > 0 ? 'bg-rose-950/10 border-rose-900/30' : 'bg-zinc-900 border-zinc-800'
+          }
+        ].map((item, idx) => (
+          <div key={idx} className={`p-3.5 rounded-xl border flex items-center justify-between shadow-sm transition-all hover:scale-[1.01] ${item.bg}`}>
+            <div>
+              <p className="text-zinc-400 text-[9px] font-bold uppercase tracking-wider">{item.label}</p>
+              <p className="text-xl font-black mt-1 text-zinc-100">{item.value}</p>
+            </div>
+            <div className="p-2 bg-zinc-950/60 rounded-xl border border-zinc-800/40">
+              {item.icon}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Filter & Search Toolbar */}
