@@ -3,7 +3,6 @@ import { TranslationProvider } from './context/TranslationContext';
 import Layout from './components/Layout';
 import Login from './components/Login';
 import ProfileModal from './components/ProfileModal';
-import DashboardTab from './components/DashboardTab';
 import InventoryTab from './components/InventoryTab';
 import LibraryTab from './components/LibraryTab';
 import InitScriptsTab from './components/InitScriptsTab';
@@ -12,7 +11,7 @@ import SettingsTab from './components/SettingsTab';
 import { Loader2 } from 'lucide-react';
 
 export function AppContent() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('inventory');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -82,8 +81,6 @@ export function AppContent() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard':
-        return <DashboardTab />;
       case 'inventory':
         return <InventoryTab />;
       case 'library':
@@ -95,7 +92,7 @@ export function AppContent() {
       case 'settings':
         return <SettingsTab />;
       default:
-        return <DashboardTab />;
+        return <InventoryTab />;
     }
   };
 

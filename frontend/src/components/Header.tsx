@@ -109,7 +109,6 @@ export default function Header({ activeTab, setActiveTab, currentUser, onLogout,
   };
 
   const navItems = [
-    { id: 'dashboard', label: t('tabDashboard'), icon: <LayoutDashboard size={14} /> },
     { id: 'inventory', label: t('tabInventory'), icon: <Server size={14} /> },
     { id: 'library', label: t('tabLibrary'), icon: <Library size={14} /> },
     { id: 'scripts', label: t('tabInitScripts'), icon: <ScrollText size={14} /> },
