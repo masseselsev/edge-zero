@@ -140,10 +140,11 @@ export default function InitScriptsTab() {
             <div>
               <label className="block text-[10px] uppercase font-bold text-zinc-505 mb-1">Select Script File</label>
               <input
+                key={uploadFile ? 'loaded' : 'empty'}
                 type="file"
                 required
                 onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
-                className="w-full text-xs bg-zinc-950 border border-zinc-800 p-2.5 rounded-lg text-zinc-400"
+                className="w-full text-xs bg-zinc-950 border border-zinc-800 p-2.5 rounded-lg text-zinc-400 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-[11px] file:font-bold file:bg-zinc-900 file:text-zinc-300 file:hover:bg-zinc-800 cursor-pointer"
               />
             </div>
 
