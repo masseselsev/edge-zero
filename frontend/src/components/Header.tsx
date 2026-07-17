@@ -111,8 +111,8 @@ export default function Header({ activeTab, setActiveTab }: HeaderProps) {
           
           {/* Left Brand Shield Identity */}
           <div className="flex-1 flex items-center gap-3 justify-center md:justify-start">
-            <div className="relative p-2 bg-indigo-600/15 border border-indigo-500/30 rounded-lg shadow-lg flex items-center justify-center w-9 h-9 text-indigo-400">
-              <Eye size={18} className="animate-pulse filter drop-shadow-[0_0_4px_rgba(99,102,241,0.6)]" />
+            <div className="relative p-2 bg-indigo-600/15 border border-indigo-500/30 rounded-lg shadow-lg flex items-center justify-center w-10 h-10 text-indigo-400">
+              <Eye size={20} className="animate-pulse filter drop-shadow-[0_0_4px_rgba(99,102,241,0.6)]" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span>
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
             </div>
