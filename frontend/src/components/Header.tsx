@@ -98,9 +98,9 @@ export default function Header({ activeTab, setActiveTab }: HeaderProps) {
   ];
 
   const getSubtitle = () => {
-    if (language === 'ru') return 'Автоматическое подключение';
-    if (language === 'uk') return 'Автоматичне підключення';
-    return 'Zero-touch Onboarding';
+    if (language === 'ru') return 'Центр автоматического подключения';
+    if (language === 'uk') return 'Центр автоматичного підключення';
+    return 'Zero-Touch Onboarding Hub';
   };
 
   return (
