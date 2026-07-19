@@ -77,10 +77,6 @@ export default function InitScriptsTab() {
     }
   };
 
-  if (loading) {
-    return <div className="text-zinc-505 text-sm animate-pulse">{t('loading')}</div>;
-  }
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -91,12 +87,11 @@ export default function InitScriptsTab() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Scripts list */}
+        {/* Scripts List */}
         <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Uploaded Init Scripts</h3>
           <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
             <table className="min-w-full divide-y divide-zinc-800 text-left text-sm text-zinc-300">
-              <thead className="bg-zinc-905 text-xs uppercase tracking-wider text-zinc-400">
+              <thead className="bg-zinc-900 text-xs uppercase tracking-wider text-zinc-400">
                 <tr className="border-b border-zinc-805 text-zinc-400 font-bold">
                   <th className="px-6 py-3">Filename</th>
                   <th className="px-6 py-3">Hardware Compatibility / Comment</th>
@@ -104,7 +99,11 @@ export default function InitScriptsTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800">
-                {scripts.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={3} className="px-6 py-8 text-center text-zinc-500 italic animate-pulse">Loading init scripts...</td>
+                  </tr>
+                ) : scripts.length === 0 ? (
                   <tr>
                     <td colSpan={3} className="px-6 py-8 text-center text-zinc-500 italic">No init scripts found.</td>
                   </tr>

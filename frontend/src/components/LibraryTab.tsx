@@ -168,9 +168,7 @@ export default function LibraryTab() {
     fetchData();
   };
 
-  if (loading) {
-    return <div className="text-zinc-500 text-sm animate-pulse">{t('loading')}</div>;
-  }
+
 
   return (
     <div className="space-y-6">
@@ -228,7 +226,11 @@ export default function LibraryTab() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800">
-                  {images.length === 0 ? (
+                  {loading ? (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-8 text-center text-zinc-500 italic animate-pulse">Loading ISO images...</td>
+                    </tr>
+                  ) : images.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="px-6 py-8 text-center text-zinc-500 italic">No ISO images uploaded.</td>
                     </tr>
@@ -330,7 +332,11 @@ export default function LibraryTab() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800">
-                  {components.length === 0 ? (
+                  {loading ? (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-8 text-center text-zinc-500 italic animate-pulse">Loading component definitions...</td>
+                    </tr>
+                  ) : components.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="px-6 py-8 text-center text-zinc-500 italic">No component definitions found.</td>
                     </tr>
@@ -421,7 +427,11 @@ export default function LibraryTab() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800">
-                  {groups.length === 0 ? (
+                  {loading ? (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-8 text-center text-zinc-500 italic animate-pulse">Loading template groups...</td>
+                    </tr>
+                  ) : groups.length === 0 ? (
                     <tr>
                       <td colSpan={3} className="px-6 py-8 text-center text-zinc-500 italic">No template groups found.</td>
                     </tr>

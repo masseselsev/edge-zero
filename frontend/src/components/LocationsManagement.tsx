@@ -160,8 +160,6 @@ export default function LocationsManagement() {
     }
   };
 
-  if (loading) return <div className="text-zinc-500 italic py-4 animate-pulse">{t('settingsLoadingLocations')}</div>;
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -181,7 +179,9 @@ export default function LocationsManagement() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         {/* Locations List */}
         <div className="md:col-span-1 border border-zinc-800 bg-zinc-900/30 rounded-xl overflow-hidden divide-y divide-zinc-850">
-          {locations.length === 0 ? (
+          {loading ? (
+            <div className="p-4 text-center text-zinc-500 italic text-xs animate-pulse">Loading profiles...</div>
+          ) : locations.length === 0 ? (
             <div className="p-4 text-center text-zinc-500 italic text-xs">{t('settingsNoLocations')}</div>
           ) : (
             locations.map((loc) => (

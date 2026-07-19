@@ -203,10 +203,6 @@ export default function SettingsTab() {
     });
   };
 
-  if (loadingSettings || loadingUsers) {
-    return <div className="text-zinc-500 text-sm animate-pulse">{t('loading')}</div>;
-  }
-
   const getSetting = (key: string, fallback: string = '') => {
     return settings.find(s => s.key === key)?.value || fallback;
   };
@@ -483,7 +479,11 @@ export default function SettingsTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-850 bg-zinc-900/10">
-                {users.length === 0 ? (
+                {loadingUsers ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-8 text-center text-zinc-500 italic animate-pulse">Loading users...</td>
+                  </tr>
+                ) : users.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-6 py-8 text-center text-zinc-500 italic">No user accounts registered.</td>
                   </tr>
