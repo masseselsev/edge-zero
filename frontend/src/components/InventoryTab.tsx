@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from '../context/TranslationContext';
 import { Search, Plus, Trash2, Server, PlayCircle, AlertTriangle } from 'lucide-react';
+import ConsoleDrawer from './ConsoleDrawer';
 
 interface Location {
   id: string;
@@ -14,6 +16,7 @@ interface Box {
   ip_address: string | null;
   status: 'NEW' | 'STAGING' | 'INSTALLING' | 'ACTIVE' | 'MAINTENANCE';
   location: Location | null;
+  installation_progress: number;
 }
 
 export default function InventoryTab() {
@@ -30,6 +33,7 @@ export default function InventoryTab() {
   
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false);
+  const [consoleBox, setConsoleBox] = useState<{ id: string; sn: string; progress: number } | null>(null);
   const [newBox, setNewBox] = useState({
     internal_sn: '',
     mac_address: '',
@@ -56,7 +60,12 @@ export default function InventoryTab() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+    // Poll every 5 s while any box is in INSTALLING status
+    const interval = setInterval(() => {
+      if (boxes.some(b => b.status === 'INSTALLING')) fetchData();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [boxes]);
 
   const handleAddBox = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,17 +100,28 @@ export default function InventoryTab() {
     }
   };
 
-  const getStatusBadge = (status: Box['status']) => {
-    const badges = {
-      NEW: 'bg-zinc-950 text-zinc-500 border-zinc-800',
-      STAGING: 'bg-indigo-950/40 text-indigo-400 border-indigo-900/30',
-      INSTALLING: 'bg-amber-950/40 text-amber-400 border-amber-900/30',
-      ACTIVE: 'bg-emerald-950/40 text-emerald-400 border-emerald-900/30',
-      MAINTENANCE: 'bg-rose-950/40 text-rose-450 border-rose-900/30'
+  const getStatusBadge = (box: Box) => {
+    if (box.status === 'INSTALLING') {
+      return (
+        <button
+          onClick={() => setConsoleBox({ id: box.id, sn: box.internal_sn, progress: box.installation_progress })}
+          className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20 transition-colors cursor-pointer"
+          title="Click to open installation console"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0" />
+          {box.installation_progress > 0 ? `Installing (${box.installation_progress}%)` : 'Installing…'}
+        </button>
+      );
+    }
+    const badges: Record<string, string> = {
+      NEW: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
+      STAGING: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+      ACTIVE: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+      MAINTENANCE: 'bg-rose-500/10 text-rose-400 border-rose-500/20'
     };
     return (
-      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badges[status] || badges.NEW}`}>
-        {status}
+      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badges[box.status] || badges.NEW}`}>
+        {box.status}
       </span>
     );
   };
@@ -140,7 +160,7 @@ export default function InventoryTab() {
               label: t('activeAlerts'),
               value: stats.active_alerts,
               icon: <AlertTriangle className="text-rose-400" size={14} />,
-              bg: stats.active_alerts > 0 ? 'bg-rose-950/10 border-rose-900/30' : 'bg-zinc-900 border-zinc-800'
+              bg: stats.active_alerts > 0 ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' : 'bg-zinc-900 border-zinc-800'
             }
           ].map((item, idx) => (
             <div key={idx} className={`p-2.5 rounded-xl border flex items-center justify-between shadow-sm transition-all hover:scale-[1.01] ${item.bg}`}>
@@ -205,16 +225,16 @@ export default function InventoryTab() {
               </tr>
             ) : (
               filteredBoxes.map((box) => (
-                <tr key={box.id} className="hover:bg-zinc-900/20 text-zinc-300">
+                <tr key={box.id} className="hover:bg-zinc-800/30 text-zinc-300 transition-colors">
                   <td className="px-6 py-4 font-bold text-zinc-200">{box.internal_sn}</td>
                   <td className="px-6 py-4 font-mono">{box.mac_address}</td>
                   <td className="px-6 py-4 font-mono text-zinc-400">{box.ip_address || '—'}</td>
                   <td className="px-6 py-4">{box.location ? box.location.name : '—'}</td>
-                  <td className="px-6 py-4">{getStatusBadge(box.status)}</td>
+                  <td className="px-6 py-4">{getStatusBadge(box)}</td>
                   <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
                     <button
                       onClick={() => handleDeleteBox(box.id)}
-                      className="p-1.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-rose-450 hover:text-rose-400 rounded transition-all cursor-pointer"
+                      className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded transition-all cursor-pointer"
                       title={t('delete')}
                     >
                       <Trash2 size={14} />
@@ -228,7 +248,7 @@ export default function InventoryTab() {
       </div>
 
       {/* Add Box Modal */}
-      {showAddModal && (
+      {showAddModal && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden animate-modal-in">
             <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
@@ -307,7 +327,17 @@ export default function InventoryTab() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
+      {/* ConsoleDrawer — opens when an INSTALLING box is clicked */}
+      {consoleBox && (
+        <ConsoleDrawer
+          boxId={consoleBox.id}
+          boxSn={consoleBox.sn}
+          progress={consoleBox.progress}
+          onClose={() => setConsoleBox(null)}
+        />
       )}
     </div>
   );
