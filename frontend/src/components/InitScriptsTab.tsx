@@ -110,7 +110,7 @@ export default function InitScriptsTab() {
                   </tr>
                 ) : (
                   scripts.map((script) => (
-                    <tr key={script.id} className="hover:bg-zinc-900/20 text-zinc-300">
+                    <tr key={script.id} className="hover:bg-zinc-800/30 text-zinc-300 transition-colors">
                       <td className="px-6 py-4 font-mono font-semibold text-indigo-400 flex items-center gap-2">
                         <FileCode size={13} className="text-zinc-500" />
                         <span>{script.filename}</span>
@@ -119,7 +119,7 @@ export default function InitScriptsTab() {
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => handleDelete(script.id)}
-                          className="p-1.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-rose-450 rounded cursor-pointer"
+                          className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded cursor-pointer"
                           title="Delete Script"
                         >
                           <Trash2 size={13} />

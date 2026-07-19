@@ -234,18 +234,18 @@ export default function LibraryTab() {
                     </tr>
                   ) : (
                     images.map(img => (
-                      <tr key={img.id} className="hover:bg-zinc-900/20 text-zinc-300">
+                      <tr key={img.id} className="hover:bg-zinc-800/30 text-zinc-300 transition-colors">
                         <td className="px-6 py-4 font-bold text-zinc-200">{img.filename}</td>
                         <td className="px-6 py-4">{img.os_type}</td>
                         <td className="px-6 py-4">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            img.status === 'SUCCESS' ? 'bg-emerald-950/20 text-emerald-400 border border-emerald-900/30' : 'bg-zinc-900 text-zinc-400'
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                            img.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
                           }`}>{img.status}</span>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button
                             onClick={() => handleDeleteImage(img.id)}
-                            className="p-1.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-rose-450 rounded cursor-pointer"
+                            className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded cursor-pointer"
                           >
                             <Trash2 size={13} />
                           </button>
@@ -336,14 +336,14 @@ export default function LibraryTab() {
                     </tr>
                   ) : (
                     components.map(comp => (
-                      <tr key={comp.id} className="hover:bg-zinc-900/20 text-zinc-300">
+                      <tr key={comp.id} className="hover:bg-zinc-800/30 text-zinc-300 transition-colors">
                         <td className="px-6 py-4 font-bold text-zinc-200">{comp.name}</td>
                         <td className="px-6 py-4">{comp.model}</td>
                         <td className="px-6 py-4 text-zinc-400">{comp.description || '—'}</td>
                         <td className="px-6 py-4 text-right">
                           <button
                             onClick={() => handleDeleteComponent(comp.id)}
-                            className="p-1.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-rose-450 rounded cursor-pointer"
+                            className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded cursor-pointer"
                           >
                             <Trash2 size={13} />
                           </button>
@@ -427,13 +427,13 @@ export default function LibraryTab() {
                     </tr>
                   ) : (
                     groups.map(grp => (
-                      <tr key={grp.id} className="hover:bg-zinc-900/20 text-zinc-300">
+                      <tr key={grp.id} className="hover:bg-zinc-800/30 text-zinc-300 transition-colors">
                         <td className="px-6 py-4 font-bold text-zinc-200">{grp.name}</td>
                         <td className="px-6 py-4 text-zinc-400">{grp.description || '—'}</td>
                         <td className="px-6 py-4 text-right">
                           <button
                             onClick={() => handleDeleteGroup(grp.id)}
-                            className="p-1.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-rose-450 rounded cursor-pointer"
+                            className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded cursor-pointer"
                           >
                             <Trash2 size={13} />
                           </button>

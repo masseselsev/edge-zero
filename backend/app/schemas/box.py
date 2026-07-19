@@ -91,6 +91,8 @@ class Box(BoxBase):
     id: UUID
     installation_progress: int = 0
     hardware_inventory: Optional[dict] = None
+    hardware_baseline: Optional[dict] = None
+    last_seen: Optional[datetime] = None
     components: List[Component] = []
     location: Optional[Location] = None
     os_image: Optional[OsImage] = None

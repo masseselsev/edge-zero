@@ -19,6 +19,8 @@ interface Box {
   location: Location | null;
   installation_progress: number;
   hardware_inventory: any;
+  hardware_baseline: any;
+  last_seen: string | null;
   components: any[];
 }
 
@@ -234,7 +236,17 @@ export default function InventoryTab() {
                     className="px-6 py-4 font-bold text-zinc-200 cursor-pointer hover:text-indigo-400 transition-colors"
                     onClick={() => setSelectedBoxId(box.id)}
                   >
-                    {box.internal_sn}
+                    <div className="flex items-center gap-2">
+                      <span 
+                        className={`w-2 h-2 rounded-full shrink-0 ${
+                          box.last_seen && (new Date().getTime() - new Date(box.last_seen).getTime()) / 1000 < 300 
+                            ? 'bg-emerald-500 animate-pulse' 
+                            : 'bg-zinc-600'
+                        }`}
+                        title={box.last_seen ? `Last seen: ${new Date(box.last_seen).toLocaleString()}` : 'Never seen'}
+                      />
+                      <span>{box.internal_sn}</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 font-mono">{box.mac_address}</td>
                   <td className="px-6 py-4 font-mono text-zinc-400">{box.ip_address || '—'}</td>

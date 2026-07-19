@@ -30,3 +30,39 @@ app.include_router(system.router, prefix="/api/system", tags=["system"])
 @app.get("/")
 def root():
     return {"message": "Welcome to Overwatch API"}
+
+async def monitor_heartbeats():
+    import asyncio
+    from datetime import datetime, timedelta
+    from sqlalchemy import select
+    from app.db.session import AsyncSessionLocal
+    from app.models.box import Box, BoxStatus
+    from app.services.telegram import send_telegram_message
+
+    while True:
+        await asyncio.sleep(60)
+        try:
+            async with AsyncSessionLocal() as db:
+                threshold = datetime.utcnow() - timedelta(minutes=5)
+                result = await db.execute(
+                    select(Box).where(
+                        Box.status == BoxStatus.ACTIVE,
+                        Box.last_seen < threshold
+                    )
+                )
+                offline_boxes = result.scalars().all()
+                for box in offline_boxes:
+                    box.status = BoxStatus.MAINTENANCE
+                    db.add(box)
+                    msg = f"⚠️ <b>Box Connection Alert</b>\n\nBox {box.internal_sn} ({box.mac_address}) went offline!\nLast seen: {box.last_seen}"
+                    await send_telegram_message(db, msg)
+                if offline_boxes:
+                    await db.commit()
+        except Exception as e:
+            import sys
+            print(f"Error in monitor_heartbeats: {e}", file=sys.stderr)
+
+@app.on_event("startup")
+async def startup_event():
+    import asyncio
+    asyncio.create_task(monitor_heartbeats())

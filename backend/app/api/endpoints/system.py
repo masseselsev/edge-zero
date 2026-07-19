@@ -110,6 +110,69 @@ async def get_system_status(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         return {"status": "offline", "database": "disconnected", "detail": str(e)}
 
+async def regenerate_dnsmasq_conf(db: AsyncSession):
+    import aiofiles
+    from sqlalchemy import select
+    from app.models.system_settings import SystemSettings
+    
+    async def get_system_setting(key: str, default: str) -> str:
+        res = await db.execute(select(SystemSettings).where(SystemSettings.key == key))
+        obj = res.scalars().first()
+        return obj.value if obj and obj.value else default
+
+    mode = await get_system_setting("DHCP_MODE", "full")
+    interface = await get_system_setting("DHCP_INTERFACE", "enp88s0")
+    range_start = await get_system_setting("DHCP_RANGE_START", "192.168.222.100")
+    range_end = await get_system_setting("DHCP_RANGE_END", "192.168.222.200")
+    netmask = await get_system_setting("DHCP_NETMASK", "255.255.255.0")
+    gateway = await get_system_setting("DHCP_ROUTER", "192.168.222.1")
+    dns = await get_system_setting("DHCP_DNS", "192.168.222.1")
+    api_host = await get_system_setting("API_HOST", "192.168.222.2")
+    api_port = await get_system_setting("API_PORT", "7000")
+
+    lines = [
+        "# Disable DNS",
+        "port=0",
+        "",
+        "# TFTP Server",
+        "enable-tftp",
+        "tftp-root=/mnt/infra_config/tftp",
+        "tftp-lowercase",
+        "",
+        "# DHCP Settings",
+        f"interface={interface}",
+        "bind-dynamic",
+    ]
+
+    if mode == "proxy":
+        subnet = ".".join(range_start.split(".")[:-1]) + ".0"
+        lines.append(f"dhcp-range={subnet},proxy")
+    else:
+        lines.append(f"dhcp-range={range_start},{range_end},{netmask},12h")
+        lines.append(f"dhcp-option=option:router,{gateway}")
+        lines.append(f"dhcp-option=option:dns-server,{dns}")
+
+    lines.extend([
+        "",
+        "# iPXE Chainloading",
+        "dhcp-match=set:ipxe,175",
+        f"dhcp-boot=tag:ipxe,http://{api_host}:{api_port}/api/provision/boot.ipxe",
+        "dhcp-boot=tag:!ipxe,ipxe.efi",
+        "",
+        "# Logging",
+        "log-dhcp",
+        "log-queries",
+        "log-facility=-"
+    ])
+
+    conf_path = "/mnt/infra_config/dnsmasq.conf"
+    try:
+        async with aiofiles.open(conf_path, "w") as f:
+            await f.write("\n".join(lines))
+    except Exception as e:
+        import sys
+        print(f"Failed to generate dnsmasq.conf: {e}", file=sys.stderr)
+
 @router.get("/settings", response_model=List[SettingItem])
 async def get_settings(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(SystemSettings))
@@ -134,6 +197,7 @@ async def update_settings(
         updates.append(f"{item.key}={item.value}")
     
     await db.commit()
+    await regenerate_dnsmasq_conf(db)
     await log_user_action(db, current_user.username, "Update Settings", f"Updated preferences: {', '.join(updates)}", request)
     return {"status": "success"}
 

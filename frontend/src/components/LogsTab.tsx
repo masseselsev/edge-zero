@@ -141,7 +141,7 @@ export default function LogsTab() {
 
       {/* Audit Logs (Table View) */}
       {logType === 'audit' && (
-        <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-md shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900 shadow-sm">
           <table className="min-w-full divide-y divide-zinc-800 text-left text-sm text-zinc-300">
             <thead className="bg-zinc-900 text-xs uppercase tracking-wider text-zinc-400">
               <tr className="border-b border-zinc-800 text-zinc-400 font-bold">
@@ -159,11 +159,11 @@ export default function LogsTab() {
                 </tr>
               ) : (
                 auditLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-zinc-900/20 text-zinc-300">
+                   <tr key={log.id} className="hover:bg-row-hover text-zinc-300 transition-colors">
                     <td className="px-6 py-4 font-mono text-zinc-500">{new Date(log.created_at).toLocaleString()}</td>
                     <td className="px-6 py-4 font-bold text-zinc-200">{log.username}</td>
                     <td className="px-6 py-4">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-950/20 text-indigo-400 border border-indigo-900/30">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-status-staging-bg text-status-staging-text border border-status-staging-border">
                         {log.action}
                       </span>
                     </td>

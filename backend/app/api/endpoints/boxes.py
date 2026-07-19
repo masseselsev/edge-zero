@@ -430,8 +430,8 @@ async def batch_apply_template(template_id: UUID, box_ids: List[UUID] = Body(...
 
 @router.post("/batch/provision")
 async def batch_provision(
-    box_ids: List[UUID] = Body(...),
     request: Request,
+    box_ids: List[UUID] = Body(...),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user)
 ):

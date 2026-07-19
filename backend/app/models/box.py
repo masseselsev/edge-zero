@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Enum, Text, Integer, ForeignKey, JSON
+from sqlalchemy import Column, String, Enum, Text, Integer, ForeignKey, JSON, DateTime
 from sqlalchemy.dialects.postgresql import UUID, INET, MACADDR
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
@@ -25,6 +25,8 @@ class Box(Base):
     notes = Column(Text, nullable=True)
     installation_progress = Column(Integer, default=0, nullable=False)
     hardware_inventory = Column(JSON, nullable=True)
+    hardware_baseline = Column(JSON, nullable=True)
+    last_seen = Column(DateTime, nullable=True)
 
     location = relationship("Location", back_populates="boxes")
     os_image = relationship("app.models.os_image.OsImage")

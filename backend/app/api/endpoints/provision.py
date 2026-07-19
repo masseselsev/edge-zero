@@ -8,6 +8,7 @@ from app.db.session import get_db
 from app.models.box import Box
 from app.models.vpn_credential import VpnCredential
 from app.models.provisioning_log import ProvisioningLog
+from app.models.system_settings import SystemSettings
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -239,19 +240,67 @@ class HardwareReport(BaseModel):
     pci_devices: Optional[str] = None
     serial_ports: Optional[str] = None
 
+def check_hardware_discrepancies(baseline: dict, current: dict) -> list[str]:
+    discrepancies = []
+    
+    # 1. PCI Devices
+    baseline_pci = set(p.strip() for p in baseline.get("pci_devices", "").split(";") if p.strip())
+    current_pci = set(p.strip() for p in current.get("pci_devices", "").split(";") if p.strip())
+    missing_pci = baseline_pci - current_pci
+    for p in missing_pci:
+        discrepancies.append(f"Missing PCI Device: {p}")
+        
+    # 2. USB Devices
+    baseline_usb = set(u.strip() for u in baseline.get("usb_devices", "").split(",") if u.strip())
+    current_usb = set(u.strip() for u in current.get("usb_devices", "").split(",") if u.strip())
+    missing_usb = baseline_usb - current_usb
+    for u in missing_usb:
+        discrepancies.append(f"Missing USB Device: {u}")
+        
+    # 3. Serial Ports
+    baseline_serial = set(s.strip() for s in baseline.get("serial_ports", "").split(",") if s.strip())
+    current_serial = set(s.strip() for s in current.get("serial_ports", "").split(",") if s.strip())
+    missing_serial = baseline_serial - current_serial
+    for s in missing_serial:
+        discrepancies.append(f"Missing Serial Port: {s}")
+        
+    # 4. Network Interfaces
+    baseline_ifs = set(i.split("(")[0].strip() for i in baseline.get("interfaces", "").split(",") if i.strip())
+    current_ifs = set(i.split("(")[0].strip() for i in current.get("interfaces", "").split(",") if i.strip())
+    missing_ifs = baseline_ifs - current_ifs
+    for i in missing_ifs:
+        discrepancies.append(f"Missing Network Interface: {i}")
+
+    return discrepancies
+
 @router.post("/{mac}/hardware-inventory")
 async def report_hardware_inventory(
     mac: str,
     payload: HardwareReport,
     db: AsyncSession = Depends(get_db)
 ):
-    """Stores the hardware diagnostic report sent by the box custom script."""
+    """Stores the hardware diagnostic report sent by the box custom script and verifies baseline status."""
+    from app.models.box import BoxStatus
+    from app.services.telegram import send_telegram_message
+    
     result = await db.execute(select(Box).where(Box.mac_address == cast(mac, MACADDR)))
     box = result.scalars().first()
     if not box:
         raise HTTPException(status_code=404, detail="Box not found")
 
-    box.hardware_inventory = payload.model_dump(exclude_none=True)
+    current_inv = payload.model_dump(exclude_none=True)
+    box.hardware_inventory = current_inv
+    
+    if not box.hardware_baseline:
+        box.hardware_baseline = current_inv
+    else:
+        mismatches = check_hardware_discrepancies(box.hardware_baseline, current_inv)
+        if mismatches:
+            box.status = BoxStatus.MAINTENANCE
+            mismatch_text = "\n".join(f"• {m}" for m in mismatches)
+            msg = f"⚠️ <b>Hardware Discrepancy Alert for Box {box.internal_sn}</b>\n\nThe following items are missing:\n{mismatch_text}"
+            await send_telegram_message(db, msg)
+
     await db.commit()
     return {"status": "ok"}
 
@@ -310,6 +359,10 @@ EOF
 
 curl -sf -X POST -H "Content-Type: application/json" -d "\$JSON_PAYLOAD" http://{api_host}:{api_port}/api/provision/{mac}/hardware-inventory || true
 echo "[Success] Hardware diagnostic report sent to orchestrator."
+
+# --- Setup cron watchdog heartbeat ---
+echo "[Info] Setting up heartbeat cron job..."
+(crontab -l 2>/dev/null; echo "* * * * * curl -sf -X POST http://{api_host}:{api_port}/api/provision/{mac}/heartbeat || true") | sort -u | crontab -
 """
     return Response(content=script_content, media_type="text/x-shellscript")
 
@@ -421,3 +474,18 @@ boot
         return Response(content=script, media_type="text/plain")
     else:
         return Response(content="#!ipxe\nexit", media_type="text/plain")
+
+@router.post("/{mac}/heartbeat")
+async def box_heartbeat(mac: str, db: AsyncSession = Depends(get_db)):
+    """Receive heartbeat tick from active boxes."""
+    from sqlalchemy import cast
+    from sqlalchemy.sql import func
+    from sqlalchemy.dialects.postgresql import MACADDR
+    result = await db.execute(select(Box).where(Box.mac_address == cast(mac, MACADDR)))
+    box = result.scalars().first()
+    if not box:
+        raise HTTPException(status_code=404, detail="Box not found")
+    
+    box.last_seen = func.now()
+    await db.commit()
+    return {"status": "ok"}

@@ -91,7 +91,17 @@ export const translations: Record<Language, Record<string, string>> = {
     settingsSaveProfile: 'Save Profile',
     settingsSelectLocationHint: 'Select a location configuration from the list or add a new one to manage its provisioning profile.',
     settingsLoadingLocations: 'Loading Locations...',
-    settingsNoLocations: 'No Locations added yet.'
+    settingsNoLocations: 'No Locations added yet.',
+
+    // DHCP settings
+    settingsDhcpTitle: 'DHCP Server Configuration',
+    settingsDhcpMode: 'DHCP Mode',
+    settingsDhcpInterface: 'Network Interface',
+    settingsDhcpStart: 'IP Pool Start',
+    settingsDhcpEnd: 'IP Pool End',
+    settingsDhcpNetmask: 'Netmask',
+    settingsDhcpRouter: 'Gateway',
+    settingsDhcpDns: 'DNS Server'
   },
   uk: {
     tabDashboard: 'Панель приладів',
@@ -183,7 +193,17 @@ export const translations: Record<Language, Record<string, string>> = {
     settingsSaveProfile: 'Зберегти профіль',
     settingsSelectLocationHint: 'Виберіть локацію зі списку або додайте нову для управління профілем мережевої розмітки та встановлення.',
     settingsLoadingLocations: 'Завантаження локацій...',
-    settingsNoLocations: 'Локації ще не додано.'
+    settingsNoLocations: 'Локації ще не додано.',
+
+    // DHCP settings
+    settingsDhcpTitle: 'Конфігурація DHCP-сервера',
+    settingsDhcpMode: 'Режим DHCP',
+    settingsDhcpInterface: 'Мережевий інтерфейс',
+    settingsDhcpStart: 'Початок діапазону IP',
+    settingsDhcpEnd: 'Кінець діапазону IP',
+    settingsDhcpNetmask: 'Маска підмережі',
+    settingsDhcpRouter: 'Шлюз',
+    settingsDhcpDns: 'DNS-сервер'
   },
   ru: {
     tabDashboard: 'Панель',
@@ -275,6 +295,16 @@ export const translations: Record<Language, Record<string, string>> = {
     settingsSaveProfile: 'Сохранить профиль',
     settingsSelectLocationHint: 'Выберите локацию из списка или добавьте новую для управления профилем сетевой разметки и установки.',
     settingsLoadingLocations: 'Загрузка локаций...',
-    settingsNoLocations: 'Локации еще не добавлены.'
+    settingsNoLocations: 'Локации еще не добавлены.',
+
+    // DHCP settings
+    settingsDhcpTitle: 'Конфигурация DHCP-сервера',
+    settingsDhcpMode: 'Режим DHCP',
+    settingsDhcpInterface: 'Сетевой интерфейс',
+    settingsDhcpStart: 'Начало диапазона IP',
+    settingsDhcpEnd: 'Конец диапазона IP',
+    settingsDhcpNetmask: 'Маска подсети',
+    settingsDhcpRouter: 'Шлюз',
+    settingsDhcpDns: 'DNS-сервер'
   }
 };
