@@ -1,11 +1,13 @@
 #cloud-config
 autoinstall:
   version: 1
-  interactive-sections:
-    - identity # Allow user to see progress, or remove to make it fully silent
-  locale: en_US.UTF-8
+  locale: {{ locale | default('en_US.UTF-8') }}
   keyboard:
-    layout: us
+    layout: {{ keyboard | default('us') }}
+  timezone: {{ timezone | default('UTC') }}
+  ntp:
+    servers:
+      - {{ ntp_server | default('pool.ntp.org') }}
   network:
     network:
       version: 2
@@ -14,8 +16,10 @@ autoinstall:
           match:
             macaddress: {{ mac_address }}
           addresses:
-            - {{ ip_address }}/24
-          gateway4: {{ gateway }}
+            - {{ ip_address }}/{{ prefix_length | default(24) }}
+          routes:
+            - to: default
+              via: {{ gateway }}
           nameservers:
             addresses:
               - {{ dns }}
@@ -28,14 +32,28 @@ autoinstall:
   storage:
     layout:
       name: direct
+  packages:
+    - curl
+    - wget
   user-data:
     disable_root: false
+  # Subiquity native HTTP reporting — sends structured JSON events to orchestrator
+  reporting:
+    orchestrator:
+      type: http
+      endpoint: http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report
   late-commands:
     - curtin in-target -- mkdir -p /root/.ssh
     - curtin in-target -- sh -c "echo '{{ ssh_public_key }}' >> /root/.ssh/authorized_keys"
+    - curtin in-target -- sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Ubuntu] SSH key injected\",\"progress\":65}' || true"
     - curtin in-target -- mkdir -p /etc/openvpn
-    - curtin in-target -- sh -c "echo '{{ ca_cert }}' > /etc/openvpn/ca.crt"
-    - curtin in-target -- sh -c "echo '{{ client_cert }}' > /etc/openvpn/client.crt"
-    - curtin in-target -- sh -c "echo '{{ client_key }}' > /etc/openvpn/client.key"
-    - curtin in-target -- sh -c "wget -O /tmp/init.sh http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/init.sh && chmod +x /tmp/init.sh && /tmp/init.sh"
+    - curtin in-target -- sh -c "printf '%b' '{{ ca_cert }}' > /etc/openvpn/ca.crt"
+    - curtin in-target -- sh -c "printf '%b' '{{ client_cert }}' > /etc/openvpn/client.crt"
+    - curtin in-target -- sh -c "printf '%b' '{{ client_key }}' > /etc/openvpn/client.key"
+    - curtin in-target -- chmod 600 /etc/openvpn/client.key
+    - curtin in-target -- sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Ubuntu] VPN credentials written\",\"progress\":70}' || true"
+    - curtin in-target -- sh -c "wget -qO /tmp/init.sh http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/init.sh && chmod +x /tmp/init.sh"
+    - curtin in-target -- sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Ubuntu] Running init.sh...\",\"progress\":85}' || true"
+    - curtin in-target -- sh -c "/tmp/init.sh >> /tmp/init.log 2>&1"
+    - curtin in-target -- sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Ubuntu] init.sh complete — sending final callback\",\"progress\":95}' || true"
     - curtin in-target -- wget -qO- http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/callback

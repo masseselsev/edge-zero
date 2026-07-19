@@ -1,30 +1,33 @@
 # Localization
-d-i debian-installer/locale string en_US.UTF-8
-d-i keyboard-configuration/xkb-keymap select us
+d-i debian-installer/locale string {{ locale | default('en_US.UTF-8') }}
+d-i keyboard-configuration/xkb-keymap select {{ keyboard | default('us') }}
 
 # Network configuration
 d-i netcfg/choose_interface select auto
 d-i netcfg/disable_dhcp boolean true
 d-i netcfg/get_ipaddress string {{ ip_address }}
-d-i netcfg/get_netmask string 255.255.255.0
+d-i netcfg/get_netmask string {{ netmask | default('255.255.255.0') }}
 d-i netcfg/get_gateway string {{ gateway }}
 d-i netcfg/get_nameservers string {{ dns }}
 d-i netcfg/confirm_static boolean true
 
 # Mirror settings
 d-i mirror/country string manual
-d-i mirror/http/hostname string deb.debian.org
+d-i mirror/http/hostname string {{ mirror_host | default('deb.debian.org') }}
 d-i mirror/http/directory string /debian
 
 # Account setup
 d-i passwd/root-login boolean true
-# Root password = root (change in production!)
-d-i passwd/root-password-crypted password $6$rounds=4096$randomsalt$6q... 
+d-i passwd/root-password-crypted password {{ root_password_hash | default('$6$rounds=4096$salt$placeholder') }}
 d-i passwd/make-user boolean false
 
 # Clock and time zone
 d-i clock-setup/utc boolean true
-d-i time/zone string UTC
+d-i time/zone string {{ timezone | default('UTC') }}
+
+# NTP
+d-i clock-setup/ntp boolean true
+d-i clock-setup/ntp-server string {{ ntp_server | default('pool.ntp.org') }}
 
 # Partitioning
 d-i partman-auto/method string regular
@@ -34,26 +37,32 @@ d-i partman/choose_partition select finish
 d-i partman/confirm boolean true
 d-i partman/confirm_nooverwrite boolean true
 
-# Package selection
+# Package selection — curl/wget required for progress reporting
 tasksel tasksel/first multiselect standard, ssh-server
+d-i pkgsel/include string curl wget
 
 # Boot loader
 d-i grub-installer/only_debian boolean true
 d-i grub-installer/bootdev string default
 
-# Late Command
-# 1. Inject SSH Key
-# 2. Inject VPN Credentials
-# 3. Download and execute aggregated init scripts
-# 4. Callback to backend
+# Late Command:
+# Each milestone sends a progress report to the orchestrator via curl.
+# Progress scale: 60 (start late_command) → 100 (callback sent).
 d-i preseed/late_command string \
+    in-target /bin/sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Debian] late_command started — OS base installed\",\"progress\":60}' || true"; \
     in-target mkdir -p /root/.ssh; \
     in-target /bin/sh -c "echo '{{ ssh_public_key }}' >> /root/.ssh/authorized_keys"; \
     in-target chmod 600 /root/.ssh/authorized_keys; \
+    in-target /bin/sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Debian] SSH key injected\",\"progress\":65}' || true"; \
     in-target mkdir -p /etc/openvpn; \
-    in-target /bin/sh -c "echo '{{ ca_cert }}' > /etc/openvpn/ca.crt"; \
-    in-target /bin/sh -c "echo '{{ client_cert }}' > /etc/openvpn/client.crt"; \
-    in-target /bin/sh -c "echo '{{ client_key }}' > /etc/openvpn/client.key"; \
+    in-target /bin/sh -c "printf '%b' '{{ ca_cert }}' > /etc/openvpn/ca.crt"; \
+    in-target /bin/sh -c "printf '%b' '{{ client_cert }}' > /etc/openvpn/client.crt"; \
+    in-target /bin/sh -c "printf '%b' '{{ client_key }}' > /etc/openvpn/client.key"; \
     in-target chmod 600 /etc/openvpn/client.key; \
-    in-target /bin/sh -c "wget -O /tmp/init.sh http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/init.sh && chmod +x /tmp/init.sh && /tmp/init.sh"; \
+    in-target /bin/sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Debian] VPN credentials written\",\"progress\":70}' || true"; \
+    in-target /bin/sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Debian] Downloading init.sh...\",\"progress\":80}' || true"; \
+    in-target /bin/sh -c "wget -qO /tmp/init.sh http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/init.sh && chmod +x /tmp/init.sh"; \
+    in-target /bin/sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Debian] Running init.sh...\",\"progress\":85}' || true"; \
+    in-target /bin/sh -c "/tmp/init.sh >> /tmp/init.log 2>&1"; \
+    in-target /bin/sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Debian] init.sh complete — sending final callback\",\"progress\":95}' || true"; \
     in-target /bin/sh -c "wget -qO- http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/callback";
