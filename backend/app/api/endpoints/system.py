@@ -306,6 +306,49 @@ async def delete_user(
     await log_user_action(db, current_user.username, "Delete User", f"Deleted administrator user '{deleted_username}'", request)
     return {"status": "success"}
 
+# User update schema for admin editing other users
+class UserAdminUpdateSchema(BaseModel):
+    role: Optional[str] = None
+    telegram_id: Optional[str] = None
+    password: Optional[str] = None
+
+@router.put("/users/{user_id}", response_model=UserResponseSchema)
+async def admin_update_user(
+    user_id: str,
+    payload: UserAdminUpdateSchema,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid user ID format")
+    
+    result = await db.execute(select(User).where(User.id == user_uuid))
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    details_list = []
+    if payload.role is not None:
+        user.role = payload.role
+        details_list.append(f"role={payload.role}")
+    if payload.telegram_id is not None:
+        user.telegram_id = payload.telegram_id
+        details_list.append(f"telegram_id={payload.telegram_id}")
+    if payload.password is not None and payload.password:
+        if len(payload.password) < 6:
+            raise HTTPException(status_code=400, detail="Password must be at least 6 characters long")
+        user.hashed_password = security.get_password_hash(payload.password)
+        details_list.append("password updated")
+        
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    await log_user_action(db, current_user.username, "Update User Account", f"Updated user '{user.username}': {', '.join(details_list)}", request)
+    return user
+
 # Profile update schemas
 class UserProfileUpdateSchema(BaseModel):
     password: Optional[str] = None

@@ -23,6 +23,20 @@ export default function LocationsManagement() {
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
+  const timezoneOptions = React.useMemo(() => {
+    let zones: string[] = [];
+    try {
+      zones = (Intl as any).supportedValuesOf('timeZone') || [];
+    } catch (e) {
+      zones = [
+        'UTC', 'Europe/Kyiv', 'Asia/Tashkent', 'Europe/London', 'Europe/Paris', 
+        'America/New_York', 'America/Los_Angeles', 'Asia/Tokyo', 
+        'Asia/Shanghai', 'Asia/Kolkata', 'Asia/Yekaterinburg'
+      ];
+    }
+    return zones;
+  }, []);
+
   const [form, setForm] = useState<Record<string, string>>({
     name: '',
     description: '',
@@ -253,13 +267,15 @@ export default function LocationsManagement() {
 
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Timezone</label>
-                  <input
-                    type="text"
+                  <select
                     value={form.timezone}
                     onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-                    className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
-                    placeholder="e.g. Asia/Tashkent"
-                  />
+                    className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none cursor-pointer"
+                  >
+                    {timezoneOptions.map(tz => (
+                      <option key={tz} value={tz}>{tz}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Locale</label>

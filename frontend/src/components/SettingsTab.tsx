@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from '../context/TranslationContext';
-import { Save, Plus, Trash2, Users, Shield } from 'lucide-react';
+import { Save, Plus, Trash2, Users, Shield, Edit, Info } from 'lucide-react';
 import LocationsManagement from './LocationsManagement';
 
 interface SettingItem {
@@ -19,6 +19,9 @@ interface UserAccount {
 export default function SettingsTab() {
   const { t } = useTranslation();
   
+  // Sub-tabs State
+  const [subTab, setSubTab] = useState<'preferences' | 'users' | 'locations'>('preferences');
+
   // Settings State
   const [settings, setSettings] = useState<SettingItem[]>([]);
   const [loadingSettings, setLoadingSettings] = useState(true);
@@ -28,12 +31,28 @@ export default function SettingsTab() {
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [isEditingUser, setIsEditingUser] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [newUser, setNewUser] = useState({
     username: '',
     password: '',
     role: 'administrator',
     telegram_id: ''
   });
+
+  const timezoneOptions = React.useMemo(() => {
+    let zones: string[] = [];
+    try {
+      zones = (Intl as any).supportedValuesOf('timeZone') || [];
+    } catch (e) {
+      zones = [
+        'UTC', 'Europe/Kyiv', 'Asia/Tashkent', 'Europe/London', 'Europe/Paris', 
+        'America/New_York', 'America/Los_Angeles', 'Asia/Tokyo', 
+        'Asia/Shanghai', 'Asia/Kolkata', 'Asia/Yekaterinburg'
+      ];
+    }
+    return zones;
+  }, []);
 
   const fetchSettings = async () => {
     try {
@@ -93,30 +112,67 @@ export default function SettingsTab() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('/api/system/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          username: newUser.username,
-          password: newUser.password,
-          role: newUser.role,
-          telegram_id: newUser.telegram_id || null
-        })
-      });
-      if (res.ok) {
-        setShowAddUserModal(false);
-        setNewUser({ username: '', password: '', role: 'administrator', telegram_id: '' });
-        fetchUsers();
+      if (isEditingUser && editingUserId) {
+        const res = await fetch(`/api/system/users/${editingUserId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            role: newUser.role,
+            telegram_id: newUser.telegram_id || null,
+            password: newUser.password || null
+          })
+        });
+        if (res.ok) {
+          setShowAddUserModal(false);
+          setIsEditingUser(false);
+          setEditingUserId(null);
+          setNewUser({ username: '', password: '', role: 'administrator', telegram_id: '' });
+          fetchUsers();
+        } else {
+          const errData = await res.json();
+          alert(`Failed to update user: ${errData.detail || 'Unknown error'}`);
+        }
       } else {
-        const errData = await res.json();
-        alert(`Failed to create user: ${errData.detail || 'Unknown error'}`);
+        const res = await fetch('/api/system/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            username: newUser.username,
+            password: newUser.password,
+            role: newUser.role,
+            telegram_id: newUser.telegram_id || null
+          })
+        });
+        if (res.ok) {
+          setShowAddUserModal(false);
+          setNewUser({ username: '', password: '', role: 'administrator', telegram_id: '' });
+          fetchUsers();
+        } else {
+          const errData = await res.json();
+          alert(`Failed to create user: ${errData.detail || 'Unknown error'}`);
+        }
       }
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleStartEditUser = (user: UserAccount) => {
+    setNewUser({
+      username: user.username,
+      password: '',
+      role: user.role,
+      telegram_id: user.telegram_id || ''
+    });
+    setEditingUserId(user.id);
+    setIsEditingUser(true);
+    setShowAddUserModal(true);
   };
 
   const handleDeleteUser = async (userId: string) => {
@@ -156,108 +212,155 @@ export default function SettingsTab() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6">
+      {/* Page Header and Sub-tabs */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-zinc-850 pb-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-zinc-100">{t('settingsTitle')}</h2>
           <p className="text-zinc-400 text-xs mt-1">{t('settingsSub')}</p>
         </div>
+        
+        <div className="flex gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800/60 w-full md:w-auto overflow-x-auto">
+          <button
+            onClick={() => setSubTab('preferences')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+              subTab === 'preferences'
+                ? 'bg-zinc-900 text-zinc-100 shadow-sm border border-zinc-800'
+                : 'text-zinc-400 hover:text-zinc-100'
+            }`}
+          >
+            System Preferences
+          </button>
+          <button
+            onClick={() => setSubTab('users')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+              subTab === 'users'
+                ? 'bg-zinc-900 text-zinc-100 shadow-sm border border-zinc-800'
+                : 'text-zinc-400 hover:text-zinc-100'
+            }`}
+          >
+            User Accounts
+          </button>
+          <button
+            onClick={() => setSubTab('locations')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+              subTab === 'locations'
+                ? 'bg-zinc-900 text-zinc-100 shadow-sm border border-zinc-800'
+                : 'text-zinc-400 hover:text-zinc-100'
+            }`}
+          >
+            Provision Profiles (Locations)
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Orchestrator Configuration (1 col) */}
-        <div className="space-y-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">System Preferences</h3>
-          <div className="bg-zinc-900/30 border border-zinc-800 p-5 rounded-xl shadow-sm space-y-4 max-h-[70vh] overflow-y-auto">
-            <form onSubmit={handleSaveSettings} className="space-y-4">
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">API Host Address</label>
-                <input
-                  type="text"
-                  value={getSetting('API_HOST', '192.168.222.2')}
-                  onChange={(e) => updateSettingValue('API_HOST', e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
-                  placeholder="e.g. 192.168.222.2"
-                />
+      {/* Sub-tab: Preferences */}
+      {subTab === 'preferences' && (
+        <div className="max-w-3xl space-y-4">
+          <div className="bg-zinc-900/35 border border-zinc-800/70 p-6 rounded-xl shadow-sm space-y-6">
+            <div className="flex items-center gap-2 pb-3 border-b border-zinc-850">
+              <Info size={16} className="text-indigo-400" />
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">System Configuration</span>
+            </div>
+
+            <form onSubmit={handleSaveSettings} className="space-y-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">API Host Address</label>
+                  <input
+                    type="text"
+                    value={getSetting('API_HOST', '192.168.222.2')}
+                    onChange={(e) => updateSettingValue('API_HOST', e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
+                    placeholder="e.g. 192.168.222.2"
+                  />
+                  <p className="text-[9px] text-zinc-500 mt-1">IP address of this orchestrator server. Used by the PXE boxes during the Debian/Ubuntu boot stage to pull post-install configurations.</p>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Timezone</label>
+                  <select
+                    value={getSetting('DEFAULT_TIMEZONE', 'UTC')}
+                    onChange={(e) => updateSettingValue('DEFAULT_TIMEZONE', e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none cursor-pointer"
+                  >
+                    {timezoneOptions.map(tz => (
+                      <option key={tz} value={tz}>{tz}</option>
+                    ))}
+                  </select>
+                  <p className="text-[9px] text-zinc-500 mt-1">Default local time offset configured on road-recording boxes if not overridden by the location profile.</p>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Telegram Bot Token</label>
+                  <input
+                    type="password"
+                    value={getSetting('TELEGRAM_BOT_TOKEN')}
+                    onChange={(e) => updateSettingValue('TELEGRAM_BOT_TOKEN', e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                    placeholder="Token from @BotFather"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Telegram Chat ID</label>
+                  <input
+                    type="text"
+                    value={getSetting('TELEGRAM_CHAT_ID')}
+                    onChange={(e) => updateSettingValue('TELEGRAM_CHAT_ID', e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                    placeholder="Default alert chat/group"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Telegram Bot Token</label>
-                <input
-                  type="password"
-                  value={getSetting('TELEGRAM_BOT_TOKEN')}
-                  onChange={(e) => updateSettingValue('TELEGRAM_BOT_TOKEN', e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
-                  placeholder="Token from @BotFather"
-                />
-              </div>
+              <div className="pt-3 border-t border-zinc-850 space-y-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Provisioning Defaults & Network settings</span>
+                <p className="text-[10px] text-zinc-450 leading-relaxed">
+                  These system defaults configure the network cards of boxes at install time. Location profiles (Tashkent, Kiev, etc.) override these settings to supply custom gateways and timezone maps per object.
+                </p>
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Telegram Chat ID</label>
-                <input
-                  type="text"
-                  value={getSetting('TELEGRAM_CHAT_ID')}
-                  onChange={(e) => updateSettingValue('TELEGRAM_CHAT_ID', e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
-                  placeholder="Default alert chat/group"
-                />
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Gateway</label>
+                    <input
+                      type="text"
+                      value={getSetting('DEFAULT_GATEWAY')}
+                      onChange={(e) => updateSettingValue('DEFAULT_GATEWAY', e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
+                      placeholder="e.g. 192.168.1.1"
+                    />
+                  </div>
 
-              <div className="pt-2 border-t border-zinc-850">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Provisioning Defaults</span>
-              </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default DNS</label>
+                    <input
+                      type="text"
+                      value={getSetting('DEFAULT_DNS')}
+                      onChange={(e) => updateSettingValue('DEFAULT_DNS', e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
+                      placeholder="e.g. 8.8.8.8"
+                    />
+                  </div>
+                </div>
 
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default SSH Public Key</label>
-                <textarea
-                  rows={2}
-                  value={getSetting('DEFAULT_SSH_PUBLIC_KEY')}
-                  onChange={(e) => updateSettingValue('DEFAULT_SSH_PUBLIC_KEY', e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 text-[10px] text-zinc-200 p-2.5 rounded-lg outline-none font-mono resize-y"
-                  placeholder="ssh-rsa AAAA..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Gateway</label>
-                <input
-                  type="text"
-                  value={getSetting('DEFAULT_GATEWAY')}
-                  onChange={(e) => updateSettingValue('DEFAULT_GATEWAY', e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
-                  placeholder="e.g. 192.168.1.1"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default DNS</label>
-                <input
-                  type="text"
-                  value={getSetting('DEFAULT_DNS')}
-                  onChange={(e) => updateSettingValue('DEFAULT_DNS', e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
-                  placeholder="e.g. 8.8.8.8"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Timezone</label>
-                <input
-                  type="text"
-                  value={getSetting('DEFAULT_TIMEZONE', 'UTC')}
-                  onChange={(e) => updateSettingValue('DEFAULT_TIMEZONE', e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
-                  placeholder="e.g. UTC"
-                />
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default SSH Public Key</label>
+                  <textarea
+                    rows={3}
+                    value={getSetting('DEFAULT_SSH_PUBLIC_KEY')}
+                    onChange={(e) => updateSettingValue('DEFAULT_SSH_PUBLIC_KEY', e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 text-[10px] text-zinc-200 p-2.5 rounded-lg outline-none font-mono resize-y"
+                    placeholder="ssh-rsa AAAA..."
+                  />
+                </div>
               </div>
 
               <div className="pt-4 border-t border-zinc-850 flex items-center justify-end">
                 <button
                   type="submit"
                   disabled={savingSettings}
-                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md"
                 >
                   <Save size={14} />
                   <span>{savingSettings ? 'Saving...' : t('save')}</span>
@@ -266,34 +369,41 @@ export default function SettingsTab() {
             </form>
           </div>
         </div>
+      )}
 
-        {/* User Accounts Management (2 cols) */}
-        <div className="lg:col-span-2 space-y-4">
+      {/* Sub-tab: Users */}
+      {subTab === 'users' && (
+        <div className="space-y-4 max-w-5xl">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
               <Users size={14} className="text-zinc-500" />
               <span>User Accounts</span>
             </h3>
             <button
-              onClick={() => setShowAddUserModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm"
+              onClick={() => {
+                setIsEditingUser(false);
+                setEditingUserId(null);
+                setNewUser({ username: '', password: '', role: 'administrator', telegram_id: '' });
+                setShowAddUserModal(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-100 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm"
             >
               <Plus size={14} />
               <span>Add User</span>
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-md shadow-sm">
-            <table className="min-w-full divide-y divide-zinc-800 text-left text-sm text-zinc-300">
-              <thead className="bg-zinc-900 text-xs uppercase tracking-wider text-zinc-400">
-                <tr className="border-b border-zinc-800 text-zinc-400 font-bold">
-                  <th className="px-6 py-3">Username</th>
-                  <th className="px-6 py-3">Role / Access Level</th>
-                  <th className="px-6 py-3">Telegram ID</th>
-                  <th className="px-6 py-3 text-right">Action</th>
+          <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/30 shadow-sm">
+            <table className="min-w-full divide-y divide-zinc-850 text-left text-sm text-zinc-300">
+              <thead className="bg-zinc-900/60 text-xs uppercase tracking-wider text-zinc-450">
+                <tr className="border-b border-zinc-850 font-bold">
+                  <th className="px-6 py-3.5">Username</th>
+                  <th className="px-6 py-3.5">Role / Access Level</th>
+                  <th className="px-6 py-3.5">Telegram ID (Individual Alerts)</th>
+                  <th className="px-6 py-3.5 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800">
+              <tbody className="divide-y divide-zinc-850 bg-zinc-900/10">
                 {users.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-6 py-8 text-center text-zinc-500 italic">No user accounts registered.</td>
@@ -306,21 +416,30 @@ export default function SettingsTab() {
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                           u.role === 'administrator' 
                             ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' 
-                            : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+                            : 'bg-zinc-500/10 text-zinc-450 border-zinc-500/20'
                         }`}>
                           <Shield size={10} />
                           <span className="capitalize">{u.role}</span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs">{u.telegram_id || '—'}</td>
+                      <td className="px-6 py-4 font-mono text-xs text-zinc-350">{u.telegram_id || '—'}</td>
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => handleDeleteUser(u.id)}
-                          className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                          title="Delete Account"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleStartEditUser(u)}
+                            className="p-1.5 bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border border-zinc-700/80 rounded transition-all cursor-pointer"
+                            title="Edit Account Properties"
+                          >
+                            <Edit size={13} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(u.id)}
+                            className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-450 border border-rose-500/20 rounded transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            title="Delete Account"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -329,17 +448,30 @@ export default function SettingsTab() {
             </table>
           </div>
         </div>
+      )}
 
-      </div>
+      {/* Sub-tab: Locations (Provision Profiles) */}
+      {subTab === 'locations' && (
+        <div className="space-y-4">
+          <LocationsManagement />
+        </div>
+      )}
 
-      {/* Add User Modal */}
+      {/* Add / Edit User Modal */}
       {showAddUserModal && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden animate-modal-in">
             <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-zinc-200">Register New User Account</h3>
+              <h3 className="text-sm font-bold text-zinc-200">
+                {isEditingUser ? 'Edit User Account Properties' : 'Register New User Account'}
+              </h3>
               <button 
-                onClick={() => setShowAddUserModal(false)}
+                onClick={() => {
+                  setShowAddUserModal(false);
+                  setIsEditingUser(false);
+                  setEditingUserId(null);
+                  setNewUser({ username: '', password: '', role: 'administrator', telegram_id: '' });
+                }}
                 className="text-zinc-500 hover:text-zinc-300 font-bold cursor-pointer"
               >
                 ✕
@@ -351,18 +483,21 @@ export default function SettingsTab() {
                 <input
                   type="text"
                   required
+                  disabled={isEditingUser}
                   value={newUser.username}
                   onChange={(e) => setNewUser({...newUser, username: e.target.value})}
-                  className="w-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg focus:border-indigo-500 outline-none"
+                  className="w-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg focus:border-indigo-500 outline-none disabled:opacity-50 font-bold"
                   placeholder="e.g. system_operator"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Password</label>
+                <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">
+                  Password {isEditingUser && '(leave blank to keep current)'}
+                </label>
                 <input
                   type="password"
-                  required
+                  required={!isEditingUser}
                   value={newUser.password}
                   onChange={(e) => setNewUser({...newUser, password: e.target.value})}
                   className="w-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg focus:border-indigo-500 outline-none"
@@ -379,6 +514,7 @@ export default function SettingsTab() {
                   className="w-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg focus:border-indigo-500 outline-none"
                   placeholder="e.g. 123456789"
                 />
+                <p className="text-[9px] text-zinc-500 mt-1">Used to alert this administrator individually via Telegram when a box installation transitions to active status.</p>
               </div>
 
               <div>
@@ -398,7 +534,12 @@ export default function SettingsTab() {
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-850">
                 <button
                   type="button"
-                  onClick={() => setShowAddUserModal(false)}
+                  onClick={() => {
+                    setShowAddUserModal(false);
+                    setIsEditingUser(false);
+                    setEditingUserId(null);
+                    setNewUser({ username: '', password: '', role: 'administrator', telegram_id: '' });
+                  }}
                   className="px-4 py-2 rounded-lg text-xs font-bold text-zinc-450 hover:text-zinc-200 cursor-pointer"
                 >
                   {t('cancel')}
@@ -415,10 +556,6 @@ export default function SettingsTab() {
         </div>,
         document.body
       )}
-      {/* Locations and Provision Profiles */}
-      <div className="border-t border-zinc-800/80 pt-8">
-        <LocationsManagement />
-      </div>
     </div>
   );
 }
