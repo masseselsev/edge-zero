@@ -216,6 +216,7 @@ async def provision_callback(mac: str, db: AsyncSession = Depends(get_db)):
     
     if box:
         box.status = BoxStatus.ACTIVE
+        box.installation_progress = 100
         await db.commit()
         await send_telegram_message(db, f"✅ <b>Box Provisioned Successfully</b>\n\nMAC: {mac}\nSN: {box.internal_sn}\nIP: {box.ip_address}")
         
