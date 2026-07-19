@@ -76,7 +76,22 @@ export const translations: Record<Language, Record<string, string>> = {
     settingsTgBotToken: 'Telegram Bot Token',
     settingsTgChatId: 'Default Telegram Chat ID',
     settingsLocationsTitle: 'Provision Profiles (Locations)',
-    settingsAddLocation: 'Add Location'
+    settingsAddLocation: 'Add Location',
+
+    // Descriptions & States
+    descApiHost: 'IP address of this orchestrator server. Used by the PXE boxes during the Debian/Ubuntu boot stage to pull post-install configurations.',
+    descDefaultTz: 'Default local time offset configured on road-recording boxes if not overridden by the location profile.',
+    descProvisionDefaults: 'These system defaults configure the network cards of boxes at install time. Location profiles (Tashkent, Kiev, etc.) override these settings to supply custom gateways and timezone maps per object.',
+    descTgBotToken: 'API Token of the bot used by the orchestrator to dispatch alerts.',
+    descTgChatId: 'Default channel or group chat ID where installation callback milestones are posted.',
+    locNoDescription: 'No description',
+    settingsCreateProfile: 'Create Provision Profile',
+    settingsConfigureProfile: 'Configure: {name}',
+    settingsNetworkConfig: 'Network settings',
+    settingsSaveProfile: 'Save Profile',
+    settingsSelectLocationHint: 'Select a location configuration from the list or add a new one to manage its provisioning profile.',
+    settingsLoadingLocations: 'Loading Locations...',
+    settingsNoLocations: 'No Locations added yet.'
   },
   uk: {
     tabDashboard: 'Панель приладів',
@@ -153,7 +168,22 @@ export const translations: Record<Language, Record<string, string>> = {
     settingsTgBotToken: 'Токен Telegram бота',
     settingsTgChatId: 'ID Telegram чату за замовчуванням',
     settingsLocationsTitle: 'Профілі встановлення (Локації)',
-    settingsAddLocation: 'Додати локацію'
+    settingsAddLocation: 'Додати локацію',
+
+    // Descriptions & States
+    descApiHost: 'IP-адреса цього сервера оркестратора. Використовується боксами при завантаженні PXE для отримання пост-інсталяційних скриптів.',
+    descDefaultTz: 'Часовий пояс за замовчуванням для боксів відеозапису, якщо не перевизначено профілем локації.',
+    descProvisionDefaults: 'Ці налаштування конфігурують мережеві карти боксів під час встановлення ОС. Профілі локацій (Ташкент, Київ тощо) перевизначають їх для кожного об\'єкта.',
+    descTgBotToken: 'Токен API бота, що використовується оркестратором для надсилання сповіщень.',
+    descTgChatId: 'ID чату або групи за замовчуванням, куди надсилаються звіти про етапи встановлення.',
+    locNoDescription: 'Немає опису',
+    settingsCreateProfile: 'Створити профіль встановлення',
+    settingsConfigureProfile: 'Налаштування: {name}',
+    settingsNetworkConfig: 'Мережеві налаштування',
+    settingsSaveProfile: 'Зберегти профіль',
+    settingsSelectLocationHint: 'Виберіть локацію зі списку або додайте нову для управління профілем мережевої розмітки та встановлення.',
+    settingsLoadingLocations: 'Завантаження локацій...',
+    settingsNoLocations: 'Локації ще не додано.'
   },
   ru: {
     tabDashboard: 'Панель',
@@ -230,6 +260,21 @@ export const translations: Record<Language, Record<string, string>> = {
     settingsTgBotToken: 'Токен Telegram бота',
     settingsTgChatId: 'ID Telegram чата по умолчанию',
     settingsLocationsTitle: 'Профили установки (Локации)',
-    settingsAddLocation: 'Добавить локацию'
+    settingsAddLocation: 'Добавить локацию',
+
+    // Descriptions & States
+    descApiHost: 'IP-адрес этого сервера оркестратора. Используется боксами при загрузке PXE для получения пост-установочных скриптов.',
+    descDefaultTz: 'Часовой пояс по умолчанию для видеорегистрирующих боксов, если не переопределен профилем локации.',
+    descProvisionDefaults: 'Эти настройки конфигурируют сетевые карты боксов во время установки ОС. Профили локаций (Ташкент, Киев и др.) переопределяют их для каждого объекта.',
+    descTgBotToken: 'Токен API бота, используемый оркестратором для отправки уведомлений.',
+    descTgChatId: 'ID чата или группы по умолчанию, куда отправляются отчеты о вехах установки.',
+    locNoDescription: 'Нет описания',
+    settingsCreateProfile: 'Создать профиль установки',
+    settingsConfigureProfile: 'Настройка: {name}',
+    settingsNetworkConfig: 'Сетевые настройки',
+    settingsSaveProfile: 'Сохранить профиль',
+    settingsSelectLocationHint: 'Выберите локацию из списка или добавьте новую для управления профилем сетевой разметки и установки.',
+    settingsLoadingLocations: 'Загрузка локаций...',
+    settingsNoLocations: 'Локации еще не добавлены.'
   }
 };

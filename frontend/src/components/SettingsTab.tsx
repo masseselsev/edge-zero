@@ -274,7 +274,7 @@ export default function SettingsTab() {
                     className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
                     placeholder="e.g. 192.168.222.2"
                   />
-                  <p className="text-[9px] text-zinc-500 mt-1">IP address of this orchestrator server. Used by the PXE boxes during the Debian/Ubuntu boot stage to pull post-install configurations.</p>
+                  <p className="text-[9px] text-zinc-500 mt-1">{t('descApiHost')}</p>
                 </div>
 
                 <div>
@@ -288,14 +288,14 @@ export default function SettingsTab() {
                       <option key={tz} value={tz}>{tz}</option>
                     ))}
                   </select>
-                  <p className="text-[9px] text-zinc-500 mt-1">Default local time offset configured on road-recording boxes if not overridden by the location profile.</p>
+                  <p className="text-[9px] text-zinc-500 mt-1">{t('descDefaultTz')}</p>
                 </div>
               </div>
 
               <div className="pt-3 border-t border-zinc-850 space-y-4">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">{t('settingsProvisionDefaults')}</span>
                 <p className="text-[10px] text-zinc-450 leading-relaxed">
-                  These system defaults configure the network cards of boxes at install time. Location profiles (Tashkent, Kiev, etc.) override these settings to supply custom gateways and timezone maps per object.
+                  {t('descProvisionDefaults')}
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -443,7 +443,7 @@ export default function SettingsTab() {
                     className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
                     placeholder="Token from @BotFather"
                   />
-                  <p className="text-[9px] text-zinc-500 mt-1">API Token of the bot used by the orchestrator to dispatch alerts.</p>
+                  <p className="text-[9px] text-zinc-500 mt-1">{t('descTgBotToken')}</p>
                 </div>
 
                 <div>
@@ -455,7 +455,7 @@ export default function SettingsTab() {
                     className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
                     placeholder="Default alert chat/group"
                   />
-                  <p className="text-[9px] text-zinc-500 mt-1">Default channel or group chat ID where installation callback milestones are posted.</p>
+                  <p className="text-[9px] text-zinc-500 mt-1">{t('descTgChatId')}</p>
                 </div>
               </div>
 

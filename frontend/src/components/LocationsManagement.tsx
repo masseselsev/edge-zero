@@ -160,7 +160,7 @@ export default function LocationsManagement() {
     }
   };
 
-  if (loading) return <div className="text-zinc-500 italic py-4 animate-pulse">Loading Locations...</div>;
+  if (loading) return <div className="text-zinc-500 italic py-4 animate-pulse">{t('settingsLoadingLocations')}</div>;
 
   return (
     <div className="space-y-6">
@@ -182,7 +182,7 @@ export default function LocationsManagement() {
         {/* Locations List */}
         <div className="md:col-span-1 border border-zinc-800 bg-zinc-900/30 rounded-xl overflow-hidden divide-y divide-zinc-850">
           {locations.length === 0 ? (
-            <div className="p-4 text-center text-zinc-500 italic text-xs">No Locations added yet.</div>
+            <div className="p-4 text-center text-zinc-500 italic text-xs">{t('settingsNoLocations')}</div>
           ) : (
             locations.map((loc) => (
               <button
@@ -195,7 +195,7 @@ export default function LocationsManagement() {
                 <div>
                   <p className="font-bold text-zinc-200">{loc.name}</p>
                   <p className="text-zinc-500 text-[10px] mt-0.5 truncate max-w-[180px]">
-                    {loc.description || 'No description'}
+                    {loc.description || t('locNoDescription')}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -215,7 +215,7 @@ export default function LocationsManagement() {
               <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
                 <span className="text-xs font-bold text-zinc-300 flex items-center gap-1.5">
                   <Edit size={12} className="text-zinc-500" />
-                  <span>{isCreating ? 'Create Provision Profile' : `Configure: ${selectedLoc?.name}`}</span>
+                  <span>{isCreating ? t('settingsCreateProfile') : t('settingsConfigureProfile', { name: selectedLoc?.name || '' })}</span>
                 </span>
                 <div className="flex items-center gap-2">
                   {!isCreating && (
@@ -314,7 +314,7 @@ export default function LocationsManagement() {
                 {/* Network Profile Section */}
                 <div className="sm:col-span-2 pt-2 border-t border-zinc-850 flex items-center gap-1.5 text-zinc-400">
                   <Network size={11} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Network settings</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">{t('settingsNetworkConfig')}</span>
                 </div>
 
                 <div>
@@ -376,13 +376,13 @@ export default function LocationsManagement() {
                   className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md"
                 >
                   <Save size={13} />
-                  <span>Save Profile</span>
+                  <span>{t('settingsSaveProfile')}</span>
                 </button>
               </div>
             </form>
           ) : (
             <div className="border border-zinc-800 border-dashed p-10 rounded-xl text-center text-zinc-500 text-xs italic bg-zinc-900/10">
-              Select a location configuration from the list or add a new one to manage its provisioning profile.
+              {t('settingsSelectLocationHint')}
             </div>
           )}
         </div>
