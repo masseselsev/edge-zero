@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from app.core.config import settings
 
 from app.api.endpoints import provision, boxes, library, device_groups, system, locations, auth, recovery, init_scripts
+from app.db.session import setup_db_logging
+
+setup_db_logging()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
