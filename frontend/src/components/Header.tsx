@@ -131,7 +131,7 @@ export default function Header({ activeTab, setActiveTab, currentUser, onLogout,
 
   return (
     <header className="bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800/80 sticky top-0 z-40">
-      <div className="max-w-[96%] xl:max-w-[94%] 2xl:max-w-[90%] mx-auto px-6 py-3 space-y-3">
+      <div className="max-w-7xl mx-auto px-6 py-3 space-y-3">
         {/* Row 1: Brand | Metrics | Controllers */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           
@@ -253,20 +253,34 @@ export default function Header({ activeTab, setActiveTab, currentUser, onLogout,
         {/* Row 2: Tab Navigation row integrated under dividers */}
         <div className="border-t border-zinc-800/60 pt-2 flex justify-center w-full">
           <nav className="w-full flex flex-wrap items-center justify-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800/60">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === item.id
-                    ? 'bg-zinc-900 text-zinc-100 shadow-sm border border-zinc-800'
-                    : 'text-zinc-400 hover:text-zinc-100'
-                }`}
-              >
-                <span className="text-indigo-400">{item.icon}</span>
-                <span>{item.label}</span>
-              </button>
-            ))}
+            {navItems.map((item) => {
+              const isSpecial = item.id === 'edgebro';
+              let btnClass = '';
+              let iconClass = '';
+              
+              if (isSpecial) {
+                btnClass = activeTab === item.id
+                  ? 'bg-indigo-600 text-white shadow-sm border border-indigo-500 hover:bg-indigo-500 ml-1'
+                  : 'bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 dark:text-indigo-300 border border-indigo-500/30 hover:border-indigo-500/50 ml-1';
+                iconClass = activeTab === item.id ? 'text-white' : 'text-indigo-400 dark:text-indigo-300';
+              } else {
+                btnClass = activeTab === item.id
+                  ? 'bg-zinc-900 text-zinc-100 shadow-sm border border-zinc-800'
+                  : 'text-zinc-400 hover:text-zinc-100';
+                iconClass = 'text-indigo-400';
+              }
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${btnClass}`}
+                >
+                  <span className={iconClass}>{item.icon}</span>
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </nav>
         </div>
 

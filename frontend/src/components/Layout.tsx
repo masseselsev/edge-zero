@@ -23,7 +23,7 @@ export default function Layout({ children, activeTab, setActiveTab, currentUser,
       />
       
       {/* Main Content Area */}
-      <main className="flex-1 max-w-[96%] xl:max-w-[94%] 2xl:max-w-[90%] w-full mx-auto px-6 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
         <div key={activeTab} className="animate-tab-in">
           {children}
         </div>

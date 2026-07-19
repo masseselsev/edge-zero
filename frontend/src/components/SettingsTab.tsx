@@ -214,7 +214,7 @@ export default function SettingsTab() {
   return (
     <div className="space-y-6">
       {/* Page Header and Sub-tabs */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-zinc-850 pb-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-zinc-100">{t('settingsTitle')}</h2>
           <p className="text-zinc-400 text-xs mt-1">{t('settingsSub')}</p>
@@ -257,7 +257,7 @@ export default function SettingsTab() {
       {/* Sub-tab: Preferences */}
       {subTab === 'preferences' && (
         <div className="w-full space-y-4">
-          <div className="bg-zinc-900/35 border border-zinc-800/70 p-6 rounded-xl shadow-sm space-y-6">
+          <div className="bg-zinc-900/50 backdrop-blur-md border border-zinc-800 p-6 rounded-xl shadow-sm space-y-6">
             <div className="flex items-center gap-2 pb-3 border-b border-zinc-850">
               <Info size={16} className="text-indigo-400" />
               <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">{t('settingsSystemConfig')}</span>
@@ -493,7 +493,7 @@ export default function SettingsTab() {
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/30 shadow-sm">
+          <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-md shadow-sm">
             <table className="min-w-full divide-y divide-zinc-850 text-left text-sm text-zinc-300">
               <thead className="bg-zinc-900/60 text-xs uppercase tracking-wider text-zinc-450">
                 <tr className="border-b border-zinc-850 font-bold">
@@ -549,7 +549,7 @@ export default function SettingsTab() {
           </div>
 
           {/* Telegram Bot Configuration Card */}
-          <div className="bg-zinc-900/35 border border-zinc-800/70 p-6 rounded-xl shadow-sm space-y-4">
+          <div className="bg-zinc-900/50 backdrop-blur-md border border-zinc-800 p-6 rounded-xl shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-zinc-850">
               <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">{t('settingsTgBotConfig')}</span>
             </div>
