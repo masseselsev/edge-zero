@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from '../context/TranslationContext';
 import { Save, Plus, Trash2, Users, Shield } from 'lucide-react';
+import LocationsManagement from './LocationsManagement';
 
 interface SettingItem {
   key: string;
@@ -137,14 +139,21 @@ export default function SettingsTab() {
   };
 
   const updateSettingValue = (key: string, value: string) => {
-    setSettings(prev => prev.map(s => s.key === key ? { ...s, value } : s));
+    setSettings(prev => {
+      if (prev.some(s => s.key === key)) {
+        return prev.map(s => s.key === key ? { ...s, value } : s);
+      }
+      return [...prev, { key, value }];
+    });
   };
 
   if (loadingSettings || loadingUsers) {
     return <div className="text-zinc-500 text-sm animate-pulse">{t('loading')}</div>;
   }
 
-  const api_host = settings.find(s => s.key === 'API_HOST')?.value || '192.168.222.2';
+  const getSetting = (key: string, fallback: string = '') => {
+    return settings.find(s => s.key === key)?.value || fallback;
+  };
 
   return (
     <div className="space-y-8">
@@ -161,16 +170,86 @@ export default function SettingsTab() {
         {/* Orchestrator Configuration (1 col) */}
         <div className="space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">System Preferences</h3>
-          <div className="bg-zinc-900/30 border border-zinc-800 p-5 rounded-xl shadow-sm">
+          <div className="bg-zinc-900/30 border border-zinc-800 p-5 rounded-xl shadow-sm space-y-4 max-h-[70vh] overflow-y-auto">
             <form onSubmit={handleSaveSettings} className="space-y-4">
               <div>
                 <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">API Host Address</label>
                 <input
                   type="text"
-                  value={api_host}
+                  value={getSetting('API_HOST', '192.168.222.2')}
                   onChange={(e) => updateSettingValue('API_HOST', e.target.value)}
                   className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
                   placeholder="e.g. 192.168.222.2"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Telegram Bot Token</label>
+                <input
+                  type="password"
+                  value={getSetting('TELEGRAM_BOT_TOKEN')}
+                  onChange={(e) => updateSettingValue('TELEGRAM_BOT_TOKEN', e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                  placeholder="Token from @BotFather"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Telegram Chat ID</label>
+                <input
+                  type="text"
+                  value={getSetting('TELEGRAM_CHAT_ID')}
+                  onChange={(e) => updateSettingValue('TELEGRAM_CHAT_ID', e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                  placeholder="Default alert chat/group"
+                />
+              </div>
+
+              <div className="pt-2 border-t border-zinc-850">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Provisioning Defaults</span>
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default SSH Public Key</label>
+                <textarea
+                  rows={2}
+                  value={getSetting('DEFAULT_SSH_PUBLIC_KEY')}
+                  onChange={(e) => updateSettingValue('DEFAULT_SSH_PUBLIC_KEY', e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 text-[10px] text-zinc-200 p-2.5 rounded-lg outline-none font-mono resize-y"
+                  placeholder="ssh-rsa AAAA..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Gateway</label>
+                <input
+                  type="text"
+                  value={getSetting('DEFAULT_GATEWAY')}
+                  onChange={(e) => updateSettingValue('DEFAULT_GATEWAY', e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                  placeholder="e.g. 192.168.1.1"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default DNS</label>
+                <input
+                  type="text"
+                  value={getSetting('DEFAULT_DNS')}
+                  onChange={(e) => updateSettingValue('DEFAULT_DNS', e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                  placeholder="e.g. 8.8.8.8"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Timezone</label>
+                <input
+                  type="text"
+                  value={getSetting('DEFAULT_TIMEZONE', 'UTC')}
+                  onChange={(e) => updateSettingValue('DEFAULT_TIMEZONE', e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                  placeholder="e.g. UTC"
                 />
               </div>
 
@@ -204,7 +283,7 @@ export default function SettingsTab() {
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
+          <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-md shadow-sm">
             <table className="min-w-full divide-y divide-zinc-800 text-left text-sm text-zinc-300">
               <thead className="bg-zinc-900 text-xs uppercase tracking-wider text-zinc-400">
                 <tr className="border-b border-zinc-800 text-zinc-400 font-bold">
@@ -221,23 +300,23 @@ export default function SettingsTab() {
                   </tr>
                 ) : (
                   users.map(u => (
-                    <tr key={u.id} className="hover:bg-zinc-900/20 text-zinc-300">
+                    <tr key={u.id} className="hover:bg-zinc-800/30 text-zinc-300 transition-colors">
                       <td className="px-6 py-4 font-bold text-zinc-200">{u.username}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                           u.role === 'administrator' 
-                            ? 'bg-indigo-950/40 text-indigo-400 border-indigo-900/30' 
-                            : 'bg-zinc-950 text-zinc-400 border-zinc-800'
+                            ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' 
+                            : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
                         }`}>
                           <Shield size={10} />
                           <span className="capitalize">{u.role}</span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs text-zinc-450">{u.telegram_id || '—'}</td>
+                      <td className="px-6 py-4 font-mono text-xs">{u.telegram_id || '—'}</td>
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => handleDeleteUser(u.id)}
-                          className="p-1.5 bg-rose-950/20 hover:bg-rose-950/40 border border-rose-900/30 text-rose-450 rounded transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                           title="Delete Account"
                         >
                           <Trash2 size={13} />
@@ -254,7 +333,7 @@ export default function SettingsTab() {
       </div>
 
       {/* Add User Modal */}
-      {showAddUserModal && (
+      {showAddUserModal && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden animate-modal-in">
             <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
@@ -333,8 +412,13 @@ export default function SettingsTab() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+      {/* Locations and Provision Profiles */}
+      <div className="border-t border-zinc-800/80 pt-8">
+        <LocationsManagement />
+      </div>
     </div>
   );
 }

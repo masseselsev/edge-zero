@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from '../context/TranslationContext';
 import { Search, Plus, Trash2, Server, PlayCircle, AlertTriangle } from 'lucide-react';
 import ConsoleDrawer from './ConsoleDrawer';
+import BoxDetailsModal from './BoxDetailsModal';
 
 interface Location {
   id: string;
@@ -17,6 +18,8 @@ interface Box {
   status: 'NEW' | 'STAGING' | 'INSTALLING' | 'ACTIVE' | 'MAINTENANCE';
   location: Location | null;
   installation_progress: number;
+  hardware_inventory: any;
+  components: any[];
 }
 
 export default function InventoryTab() {
@@ -33,6 +36,7 @@ export default function InventoryTab() {
   
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
   const [consoleBox, setConsoleBox] = useState<{ id: string; sn: string; progress: number } | null>(null);
   const [newBox, setNewBox] = useState({
     internal_sn: '',
@@ -226,7 +230,12 @@ export default function InventoryTab() {
             ) : (
               filteredBoxes.map((box) => (
                 <tr key={box.id} className="hover:bg-zinc-800/30 text-zinc-300 transition-colors">
-                  <td className="px-6 py-4 font-bold text-zinc-200">{box.internal_sn}</td>
+                  <td 
+                    className="px-6 py-4 font-bold text-zinc-200 cursor-pointer hover:text-indigo-400 transition-colors"
+                    onClick={() => setSelectedBoxId(box.id)}
+                  >
+                    {box.internal_sn}
+                  </td>
                   <td className="px-6 py-4 font-mono">{box.mac_address}</td>
                   <td className="px-6 py-4 font-mono text-zinc-400">{box.ip_address || '—'}</td>
                   <td className="px-6 py-4">{box.location ? box.location.name : '—'}</td>
@@ -339,6 +348,16 @@ export default function InventoryTab() {
           onClose={() => setConsoleBox(null)}
         />
       )}
+      {/* BoxDetailsModal — opens when box serial number is clicked */}
+      {selectedBoxId && (() => {
+        const box = boxes.find(b => b.id === selectedBoxId);
+        return box ? (
+          <BoxDetailsModal
+            box={box}
+            onClose={() => setSelectedBoxId(null)}
+          />
+        ) : null;
+      })()}
     </div>
   );
 }
