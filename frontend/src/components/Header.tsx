@@ -124,7 +124,7 @@ export default function Header({ activeTab, setActiveTab, currentUser, onLogout,
 
   return (
     <header className="bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800/80 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-6 py-3 space-y-3">
+      <div className="max-w-[96%] xl:max-w-[94%] 2xl:max-w-[90%] mx-auto px-6 py-3 space-y-3">
         {/* Row 1: Brand | Metrics | Controllers */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           
@@ -220,7 +220,7 @@ export default function Header({ activeTab, setActiveTab, currentUser, onLogout,
                           setProfileDropdownOpen(false);
                           onLogout();
                         }}
-                        className="w-full text-left px-3 py-2 text-xs font-semibold rounded-md text-rose-450 hover:text-rose-400 hover:bg-rose-950/20 transition-colors border-t border-zinc-850 mt-1 pt-2 cursor-pointer"
+                        className="w-full text-left px-3 py-2 text-xs font-semibold rounded-md text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors border-t border-zinc-800 mt-1 pt-2 cursor-pointer"
                       >
                         {t('logoutButton')}
                       </button>

@@ -256,7 +256,7 @@ export default function SettingsTab() {
 
       {/* Sub-tab: Preferences */}
       {subTab === 'preferences' && (
-        <div className="max-w-3xl space-y-4">
+        <div className="w-full space-y-4">
           <div className="bg-zinc-900/35 border border-zinc-800/70 p-6 rounded-xl shadow-sm space-y-6">
             <div className="flex items-center gap-2 pb-3 border-b border-zinc-850">
               <Info size={16} className="text-indigo-400" />
@@ -373,7 +373,7 @@ export default function SettingsTab() {
 
       {/* Sub-tab: Users */}
       {subTab === 'users' && (
-        <div className="space-y-4 max-w-5xl">
+        <div className="space-y-4 w-full">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
               <Users size={14} className="text-zinc-500" />
