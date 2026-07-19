@@ -239,7 +239,7 @@ export default function SettingsTab() {
                 : 'text-zinc-400 hover:text-zinc-100'
             }`}
           >
-            User Accounts
+            Users & Alerts
           </button>
           <button
             onClick={() => setSubTab('locations')}
@@ -289,28 +289,6 @@ export default function SettingsTab() {
                     ))}
                   </select>
                   <p className="text-[9px] text-zinc-500 mt-1">Default local time offset configured on road-recording boxes if not overridden by the location profile.</p>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Telegram Bot Token</label>
-                  <input
-                    type="password"
-                    value={getSetting('TELEGRAM_BOT_TOKEN')}
-                    onChange={(e) => updateSettingValue('TELEGRAM_BOT_TOKEN', e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
-                    placeholder="Token from @BotFather"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Telegram Chat ID</label>
-                  <input
-                    type="text"
-                    value={getSetting('TELEGRAM_CHAT_ID')}
-                    onChange={(e) => updateSettingValue('TELEGRAM_CHAT_ID', e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
-                    placeholder="Default alert chat/group"
-                  />
                 </div>
               </div>
 
@@ -446,6 +424,52 @@ export default function SettingsTab() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Telegram Bot Configuration Card */}
+          <div className="bg-zinc-900/35 border border-zinc-800/70 p-6 rounded-xl shadow-sm space-y-4">
+            <div className="flex items-center gap-2 pb-3 border-b border-zinc-850">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">Telegram Bot Notifications</span>
+            </div>
+            
+            <form onSubmit={handleSaveSettings} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Telegram Bot Token</label>
+                  <input
+                    type="password"
+                    value={getSetting('TELEGRAM_BOT_TOKEN')}
+                    onChange={(e) => updateSettingValue('TELEGRAM_BOT_TOKEN', e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
+                    placeholder="Token from @BotFather"
+                  />
+                  <p className="text-[9px] text-zinc-500 mt-1">API Token of the bot used by the orchestrator to dispatch alerts.</p>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Telegram Chat ID</label>
+                  <input
+                    type="text"
+                    value={getSetting('TELEGRAM_CHAT_ID')}
+                    onChange={(e) => updateSettingValue('TELEGRAM_CHAT_ID', e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
+                    placeholder="Default alert chat/group"
+                  />
+                  <p className="text-[9px] text-zinc-500 mt-1">Default channel or group chat ID where installation callback milestones are posted.</p>
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end">
+                <button
+                  type="submit"
+                  disabled={savingSettings}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md"
+                >
+                  <Save size={13} />
+                  <span>{savingSettings ? 'Saving...' : 'Save Bot Settings'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
