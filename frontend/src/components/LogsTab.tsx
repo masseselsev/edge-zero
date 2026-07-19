@@ -28,6 +28,7 @@ export default function LogsTab() {
   const [loading, setLoading] = useState(true);
   
   const terminalEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -60,10 +61,14 @@ export default function LogsTab() {
     return () => clearInterval(interval);
   }, [logType]);
 
-  // Auto-scroll to bottom of terminal
+  // Auto-scroll to bottom of terminal (only if already at the bottom)
   useEffect(() => {
-    if (logType === 'debug' && terminalEndRef.current) {
-      terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    const container = containerRef.current;
+    if (logType === 'debug' && container && terminalEndRef.current) {
+      const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+      if (isAtBottom) {
+        terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   }, [debugLogs, logType]);
 
@@ -122,7 +127,7 @@ export default function LogsTab() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 font-mono text-[11px] leading-relaxed space-y-1 select-text">
+          <div ref={containerRef} className="flex-1 overflow-y-auto p-4 font-mono text-[11px] leading-relaxed space-y-1 select-text">
             {debugLogs.length === 0 ? (
               <div className="text-zinc-650 italic text-center py-12">No system logs logged yet.</div>
             ) : (

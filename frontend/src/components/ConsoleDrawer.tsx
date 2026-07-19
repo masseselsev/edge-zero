@@ -41,6 +41,7 @@ export default function ConsoleDrawer({ boxId, boxSn, progress, onClose }: Conso
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const fetchLogs = async () => {
@@ -63,9 +64,15 @@ export default function ConsoleDrawer({ boxId, boxSn, progress, onClose }: Conso
     return () => clearInterval(interval);
   }, [boxId]);
 
-  // Auto-scroll to bottom when new lines arrive
+  // Auto-scroll to bottom when new lines arrive (only if already at the bottom)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = containerRef.current;
+    if (container) {
+      const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+      if (isAtBottom) {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
   }, [logs]);
 
   // Close on Escape key
@@ -134,7 +141,7 @@ export default function ConsoleDrawer({ boxId, boxSn, progress, onClose }: Conso
         </div>
 
         {/* Log body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-0.5 font-mono text-[11px] leading-relaxed">
+        <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-0.5 font-mono text-[11px] leading-relaxed">
           {logs.length === 0 && !loading && (
             <p className="text-zinc-600 italic py-4 text-center">Waiting for installer reports…</p>
           )}
