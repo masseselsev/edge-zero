@@ -8,6 +8,7 @@ export const translations: Record<Language, Record<string, string>> = {
     tabInitScripts: 'Init Scripts',
     tabLogs: 'Logs',
     tabSettings: 'Settings',
+    tabEdgeBro: 'Edge B.R.O.',
     
     // Status
     systemStatus: 'System Status',
@@ -110,6 +111,7 @@ export const translations: Record<Language, Record<string, string>> = {
     tabInitScripts: 'Скрипти ініціалізації',
     tabLogs: 'Журнали',
     tabSettings: 'Налаштування',
+    tabEdgeBro: 'Edge B.R.O.',
     
     // Status
     systemStatus: 'Статус системи',
@@ -212,6 +214,7 @@ export const translations: Record<Language, Record<string, string>> = {
     tabInitScripts: 'Скрипты инициализации',
     tabLogs: 'Журналы',
     tabSettings: 'Настройки',
+    tabEdgeBro: 'Edge B.R.O.',
     
     // Status
     systemStatus: 'Статус системы',

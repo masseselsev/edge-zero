@@ -8,6 +8,7 @@ import LibraryTab from './components/LibraryTab';
 import InitScriptsTab from './components/InitScriptsTab';
 import LogsTab from './components/LogsTab';
 import SettingsTab from './components/SettingsTab';
+import EdgeBroTab from './components/EdgeBroTab';
 import { Loader2 } from 'lucide-react';
 
 export function AppContent() {
@@ -99,6 +100,8 @@ export function AppContent() {
         return <LogsTab />;
       case 'settings':
         return <SettingsTab />;
+      case 'edgebro':
+        return <EdgeBroTab />;
       default:
         return <InventoryTab />;
     }

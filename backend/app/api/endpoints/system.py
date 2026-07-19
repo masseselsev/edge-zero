@@ -441,3 +441,120 @@ async def update_profile(
     await db.refresh(current_user)
     await log_user_action(db, current_user.username, "Update Profile", f"Updated profile details: {', '.join(details_list)}", request)
     return current_user
+
+import httpx
+from pydantic import BaseModel
+
+class EdgeBroSyncRequest(BaseModel):
+    box_ids: List[str]
+
+async def get_edge_bro_client(db: AsyncSession):
+    """Helper to fetch settings and log in to Edge B.R.O., returning AsyncClient with Auth token."""
+    from app.api.endpoints.provision import get_system_setting
+    url = await get_system_setting(db, "EDGE_BRO_URL", "http://localhost:8000")
+    user = await get_system_setting(db, "EDGE_BRO_USER", "admin")
+    password = await get_system_setting(db, "EDGE_BRO_PASSWORD", "admin")
+
+    client = httpx.AsyncClient(base_url=url, timeout=10.0)
+    try:
+        resp = await client.post("/api/auth/login", json={"username": user, "password": password})
+        if resp.status_code == 200:
+            token = resp.json().get("access_token")
+            client.headers.update({"Authorization": f"Bearer {token}"})
+            return client, url, None
+        else:
+            return None, url, f"Login failed: {resp.status_code} {resp.text}"
+    except Exception as e:
+        return None, url, str(e)
+
+@router.get("/edge-bro/status")
+async def get_edge_bro_status(db: AsyncSession = Depends(get_db)):
+    """Checks connection status and queries matched nodes from Edge B.R.O."""
+    from app.models.box import Box, BoxStatus
+    from sqlalchemy import or_
+    
+    client, url, err = await get_edge_bro_client(db)
+    if err:
+        return {"status": "error", "message": err, "url": url, "nodes": []}
+
+    try:
+        resp = await client.get("/api/nodes?limit=1000")
+        if resp.status_code != 200:
+            await client.aclose()
+            return {"status": "error", "message": f"Fetch nodes failed: {resp.status_code}", "url": url, "nodes": []}
+        
+        bro_nodes = resp.json().get("nodes", [])
+        bro_map = {node["hostname"].upper(): node for node in bro_nodes}
+    except Exception as e:
+        await client.aclose()
+        return {"status": "error", "message": str(e), "url": url, "nodes": []}
+    finally:
+        if client:
+            await client.aclose()
+
+    # Query Overwatch boxes
+    result = await db.execute(
+        select(Box).where(
+            or_(Box.status == BoxStatus.ACTIVE, Box.status == BoxStatus.MAINTENANCE)
+        )
+    )
+    boxes = result.scalars().all()
+
+    nodes_list = []
+    for box in boxes:
+        bro_node = bro_map.get(box.internal_sn.upper())
+        nodes_list.append({
+            "id": str(box.id),
+            "internal_sn": box.internal_sn,
+            "mac_address": box.mac_address,
+            "ip_address": box.ip_address,
+            "overwatch_status": box.status,
+            "edge_bro_status": bro_node["status"] if bro_node else "NOT_REGISTERED",
+            "edge_bro_id": bro_node["id"] if bro_node else None,
+            "last_backup": bro_node["last_backup"] if bro_node else None
+        })
+
+    return {"status": "connected", "url": url, "nodes": nodes_list}
+
+@router.post("/edge-bro/sync")
+async def sync_edge_bro_nodes(payload: EdgeBroSyncRequest, db: AsyncSession = Depends(get_db), current_user: User = Depends(deps.get_current_user)):
+    """Registers requested Overwatch boxes to Edge B.R.O."""
+    from app.models.box import Box
+    
+    client, url, err = await get_edge_bro_client(db)
+    if err:
+        raise HTTPException(status_code=500, detail=f"Failed to reach Edge B.R.O.: {err}")
+
+    results = []
+    try:
+        for bid in payload.box_ids:
+            try:
+                # Convert ID to UUID
+                bid_uuid = uuid.UUID(bid)
+            except ValueError:
+                results.append({"box_id": bid, "status": "error", "detail": "Invalid box ID format"})
+                continue
+                
+            result = await db.execute(select(Box).where(Box.id == bid_uuid))
+            box = result.scalars().first()
+            if not box:
+                results.append({"box_id": bid, "status": "error", "detail": "Box not found"})
+                continue
+
+            node_payload = {
+                "hostname": box.internal_sn,
+                "ip_address": box.ip_address,
+                "ssh_port": box.ssh_port or 2222,
+                "bootstrap_user": box.ssh_username or "user",
+                "bootstrap_password": box.ssh_password or "admin",
+                "auto_detect_hostname": False
+            }
+            resp = await client.post("/api/nodes", json=node_payload)
+            if resp.status_code in (200, 201):
+                results.append({"box_id": bid, "status": "success"})
+            else:
+                results.append({"box_id": bid, "status": "error", "detail": f"B.R.O. API returned {resp.status_code}: {resp.text}"})
+    finally:
+        await client.aclose()
+
+    return {"status": "complete", "results": results}

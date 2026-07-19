@@ -419,6 +419,43 @@ export default function SettingsTab() {
                 )}
               </div>
 
+              {/* Edge B.R.O. Integration credentials card */}
+              <div className="pt-3 border-t border-zinc-850 space-y-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Edge B.R.O. Integration</span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Edge B.R.O. Server URL</label>
+                    <input
+                      type="text"
+                      value={getSetting('EDGE_BRO_URL', 'http://localhost:8000')}
+                      onChange={(e) => updateSettingValue('EDGE_BRO_URL', e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
+                      placeholder="e.g. http://192.168.222.3:8000"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">B.R.O. API Username</label>
+                    <input
+                      type="text"
+                      value={getSetting('EDGE_BRO_USER', 'admin')}
+                      onChange={(e) => updateSettingValue('EDGE_BRO_USER', e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                      placeholder="e.g. admin"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">B.R.O. API Password</label>
+                    <input
+                      type="password"
+                      value={getSetting('EDGE_BRO_PASSWORD', 'admin')}
+                      onChange={(e) => updateSettingValue('EDGE_BRO_PASSWORD', e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none"
+                      placeholder="e.g. admin_password"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="pt-4 border-t border-zinc-850 flex items-center justify-end">
                 <button
                   type="submit"
