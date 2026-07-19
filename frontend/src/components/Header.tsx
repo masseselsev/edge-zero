@@ -117,8 +117,6 @@ export default function Header({ activeTab, setActiveTab, currentUser, onLogout,
   ];
 
   const getSubtitle = () => {
-    if (language === 'ru') return 'Центр автоматического подключения';
-    if (language === 'uk') return 'Центр автоматичного підключення';
     return 'Zero-Touch Onboarding Hub';
   };
 

@@ -57,7 +57,26 @@ export const translations: Record<Language, Record<string, string>> = {
     loginPassword: 'Password',
     loginSubmit: 'Sign In',
     loginError: 'Invalid username or password',
-    logoutButton: 'Logout'
+    logoutButton: 'Logout',
+
+    // New Settings Options
+    settingsSubTabPreferences: 'System Preferences',
+    settingsSubTabUsers: 'Users & Alerts',
+    settingsSubTabLocations: 'Provision Profiles (Locations)',
+    settingsSystemConfig: 'System Configuration',
+    settingsApiHost: 'API Host Address',
+    settingsDefaultTz: 'Default Timezone',
+    settingsProvisionDefaults: 'Provisioning Defaults & Network settings',
+    settingsDefaultGateway: 'Default Gateway',
+    settingsDefaultDns: 'Default DNS',
+    settingsDefaultSsh: 'Default SSH Public Key',
+    settingsUserAccounts: 'User Accounts',
+    settingsAddUser: 'Add User',
+    settingsTgBotConfig: 'Telegram Bot Notifications',
+    settingsTgBotToken: 'Telegram Bot Token',
+    settingsTgChatId: 'Default Telegram Chat ID',
+    settingsLocationsTitle: 'Provision Profiles (Locations)',
+    settingsAddLocation: 'Add Location'
   },
   uk: {
     tabDashboard: 'Панель приладів',
@@ -115,7 +134,26 @@ export const translations: Record<Language, Record<string, string>> = {
     loginPassword: 'Пароль',
     loginSubmit: 'Увійти',
     loginError: 'Невірні ім\'я користувача або пароль',
-    logoutButton: 'Вийти'
+    logoutButton: 'Вийти',
+
+    // New Settings Options
+    settingsSubTabPreferences: 'Системні уподобання',
+    settingsSubTabUsers: 'Користувачі та сповіщення',
+    settingsSubTabLocations: 'Профілі встановлення (Локації)',
+    settingsSystemConfig: 'Системна конфігурація',
+    settingsApiHost: 'IP-адреса API хоста',
+    settingsDefaultTz: 'Часовий пояс за замовчуванням',
+    settingsProvisionDefaults: 'Параметри встановлення та мережі за замовчуванням',
+    settingsDefaultGateway: 'Шлюз за замовчуванням',
+    settingsDefaultDns: 'DNS за замовчуванням',
+    settingsDefaultSsh: 'Публічний SSH-ключ за замовчуванням',
+    settingsUserAccounts: 'Облікові записи користувачів',
+    settingsAddUser: 'Додати користувача',
+    settingsTgBotConfig: 'Налаштування Telegram бота',
+    settingsTgBotToken: 'Токен Telegram бота',
+    settingsTgChatId: 'ID Telegram чату за замовчуванням',
+    settingsLocationsTitle: 'Профілі встановлення (Локації)',
+    settingsAddLocation: 'Додати локацію'
   },
   ru: {
     tabDashboard: 'Панель',
@@ -173,6 +211,25 @@ export const translations: Record<Language, Record<string, string>> = {
     loginPassword: 'Пароль',
     loginSubmit: 'Войти',
     loginError: 'Неверное имя пользователя или пароль',
-    logoutButton: 'Выйти'
+    logoutButton: 'Выйти',
+
+    // New Settings Options
+    settingsSubTabPreferences: 'Системные предпочтения',
+    settingsSubTabUsers: 'Пользователи и оповещения',
+    settingsSubTabLocations: 'Профили установки (Локации)',
+    settingsSystemConfig: 'Системная конфигурация',
+    settingsApiHost: 'IP-адрес API хоста',
+    settingsDefaultTz: 'Часовой пояс по умолчанию',
+    settingsProvisionDefaults: 'Параметры установки и сети по умолчанию',
+    settingsDefaultGateway: 'Шлюз по умолчанию',
+    settingsDefaultDns: 'DNS по умолчанию',
+    settingsDefaultSsh: 'Публичный SSH-ключ по умолчанию',
+    settingsUserAccounts: 'Учетные записи пользователей',
+    settingsAddUser: 'Добавить пользователя',
+    settingsTgBotConfig: 'Настройки Telegram бота',
+    settingsTgBotToken: 'Токен Telegram бота',
+    settingsTgChatId: 'ID Telegram чата по умолчанию',
+    settingsLocationsTitle: 'Профили установки (Локации)',
+    settingsAddLocation: 'Добавить локацию'
   }
 };

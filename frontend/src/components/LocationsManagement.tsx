@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Plus, Trash2, Save, X, Edit, Network, Globe } from 'lucide-react';
 
+import { useTranslation } from '../context/TranslationContext';
+
 interface Location {
   id: string;
   name: string;
@@ -17,6 +19,7 @@ interface Location {
 }
 
 export default function LocationsManagement() {
+  const { t } = useTranslation();
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLoc, setSelectedLoc] = useState<Location | null>(null);
@@ -164,14 +167,14 @@ export default function LocationsManagement() {
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
           <MapPin size={14} className="text-zinc-500" />
-          <span>Provision Profiles (Locations)</span>
+          <span>{t('settingsLocationsTitle')}</span>
         </h3>
         <button
           onClick={handleStartCreate}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md"
         >
           <Plus size={14} />
-          <span>Add Location</span>
+          <span>{t('settingsAddLocation')}</span>
         </button>
       </div>
 

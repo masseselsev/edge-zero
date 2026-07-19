@@ -229,7 +229,7 @@ export default function SettingsTab() {
                 : 'text-zinc-400 hover:text-zinc-100'
             }`}
           >
-            System Preferences
+            {t('settingsSubTabPreferences')}
           </button>
           <button
             onClick={() => setSubTab('users')}
@@ -239,7 +239,7 @@ export default function SettingsTab() {
                 : 'text-zinc-400 hover:text-zinc-100'
             }`}
           >
-            Users & Alerts
+            {t('settingsSubTabUsers')}
           </button>
           <button
             onClick={() => setSubTab('locations')}
@@ -249,7 +249,7 @@ export default function SettingsTab() {
                 : 'text-zinc-400 hover:text-zinc-100'
             }`}
           >
-            Provision Profiles (Locations)
+            {t('settingsSubTabLocations')}
           </button>
         </div>
       </div>
@@ -260,13 +260,13 @@ export default function SettingsTab() {
           <div className="bg-zinc-900/35 border border-zinc-800/70 p-6 rounded-xl shadow-sm space-y-6">
             <div className="flex items-center gap-2 pb-3 border-b border-zinc-850">
               <Info size={16} className="text-indigo-400" />
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">System Configuration</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">{t('settingsSystemConfig')}</span>
             </div>
 
             <form onSubmit={handleSaveSettings} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">API Host Address</label>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('settingsApiHost')}</label>
                   <input
                     type="text"
                     value={getSetting('API_HOST', '192.168.222.2')}
@@ -278,7 +278,7 @@ export default function SettingsTab() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Timezone</label>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('settingsDefaultTz')}</label>
                   <select
                     value={getSetting('DEFAULT_TIMEZONE', 'UTC')}
                     onChange={(e) => updateSettingValue('DEFAULT_TIMEZONE', e.target.value)}
@@ -293,14 +293,14 @@ export default function SettingsTab() {
               </div>
 
               <div className="pt-3 border-t border-zinc-850 space-y-4">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Provisioning Defaults & Network settings</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">{t('settingsProvisionDefaults')}</span>
                 <p className="text-[10px] text-zinc-450 leading-relaxed">
                   These system defaults configure the network cards of boxes at install time. Location profiles (Tashkent, Kiev, etc.) override these settings to supply custom gateways and timezone maps per object.
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Gateway</label>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('settingsDefaultGateway')}</label>
                     <input
                       type="text"
                       value={getSetting('DEFAULT_GATEWAY')}
@@ -311,7 +311,7 @@ export default function SettingsTab() {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default DNS</label>
+                    <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('settingsDefaultDns')}</label>
                     <input
                       type="text"
                       value={getSetting('DEFAULT_DNS')}
@@ -323,7 +323,7 @@ export default function SettingsTab() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default SSH Public Key</label>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('settingsDefaultSsh')}</label>
                   <textarea
                     rows={3}
                     value={getSetting('DEFAULT_SSH_PUBLIC_KEY')}
@@ -355,7 +355,7 @@ export default function SettingsTab() {
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
               <Users size={14} className="text-zinc-500" />
-              <span>User Accounts</span>
+              <span>{t('settingsUserAccounts')}</span>
             </h3>
             <button
               onClick={() => {
@@ -367,7 +367,7 @@ export default function SettingsTab() {
               className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-100 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm"
             >
               <Plus size={14} />
-              <span>Add User</span>
+              <span>{t('settingsAddUser')}</span>
             </button>
           </div>
 
@@ -429,13 +429,13 @@ export default function SettingsTab() {
           {/* Telegram Bot Configuration Card */}
           <div className="bg-zinc-900/35 border border-zinc-800/70 p-6 rounded-xl shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-zinc-850">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">Telegram Bot Notifications</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-300">{t('settingsTgBotConfig')}</span>
             </div>
             
             <form onSubmit={handleSaveSettings} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Telegram Bot Token</label>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('settingsTgBotToken')}</label>
                   <input
                     type="password"
                     value={getSetting('TELEGRAM_BOT_TOKEN')}
@@ -447,7 +447,7 @@ export default function SettingsTab() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Default Telegram Chat ID</label>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('settingsTgChatId')}</label>
                   <input
                     type="text"
                     value={getSetting('TELEGRAM_CHAT_ID')}
@@ -466,7 +466,7 @@ export default function SettingsTab() {
                   className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md"
                 >
                   <Save size={13} />
-                  <span>{savingSettings ? 'Saving...' : 'Save Bot Settings'}</span>
+                  <span>{savingSettings ? 'Saving...' : t('save')}</span>
                 </button>
               </div>
             </form>
