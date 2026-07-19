@@ -214,9 +214,6 @@ button, a, label, span, p, h1, h2, h3, h4, h5, h6 {
 }
 
 /* Global typography overrides to increase system-wide font readability */
-html {
-  font-size: 15px;
-}
 
 label {
   font-size: 11.5px !important;
