@@ -365,7 +365,7 @@ export default function SettingsTab() {
 
                 {getSetting('DHCP_MODE', 'full') === 'full' && (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('settingsDhcpStart')}</label>
                         <input
@@ -384,33 +384,12 @@ export default function SettingsTab() {
                           className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
                         />
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('settingsDhcpNetmask')}</label>
                         <input
                           type="text"
                           value={getSetting('DHCP_NETMASK', '255.255.255.0')}
                           onChange={(e) => updateSettingValue('DHCP_NETMASK', e.target.value)}
-                          className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('settingsDhcpRouter')}</label>
-                        <input
-                          type="text"
-                          value={getSetting('DHCP_ROUTER', '192.168.222.1')}
-                          onChange={(e) => updateSettingValue('DHCP_ROUTER', e.target.value)}
-                          className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('settingsDhcpDns')}</label>
-                        <input
-                          type="text"
-                          value={getSetting('DHCP_DNS', '192.168.222.1')}
-                          onChange={(e) => updateSettingValue('DHCP_DNS', e.target.value)}
                           className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none font-mono"
                         />
                       </div>

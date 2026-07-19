@@ -125,8 +125,8 @@ async def regenerate_dnsmasq_conf(db: AsyncSession):
     range_start = await get_system_setting("DHCP_RANGE_START", "192.168.222.100")
     range_end = await get_system_setting("DHCP_RANGE_END", "192.168.222.200")
     netmask = await get_system_setting("DHCP_NETMASK", "255.255.255.0")
-    gateway = await get_system_setting("DHCP_ROUTER", "192.168.222.1")
-    dns = await get_system_setting("DHCP_DNS", "192.168.222.1")
+    gateway = await get_system_setting("DEFAULT_GATEWAY", "192.168.222.1")
+    dns = await get_system_setting("DEFAULT_DNS", "192.168.222.1")
     api_host = await get_system_setting("API_HOST", "192.168.222.2")
     api_port = await get_system_setting("API_PORT", "7000")
 
