@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, cast, delete, update, asc
 from sqlalchemy.dialects.postgresql import MACADDR
@@ -7,7 +7,9 @@ from uuid import UUID
 import csv
 import io
 
-from app.db.session import get_db
+from app.db.session import get_db, log_user_action
+from app.api import deps
+from app.models.user import User
 from app.models.box import Box as BoxModel
 from app.models.box import BoxStatus
 from app.schemas.box import Box, BoxCreate, BoxUpdate
@@ -130,7 +132,12 @@ async def read_boxes(skip: int = 0, limit: int = 100, db: AsyncSession = Depends
     return result.scalars().all()
 
 @router.post("/", response_model=Box)
-async def create_box(box: BoxCreate, db: AsyncSession = Depends(get_db)):
+async def create_box(
+    box: BoxCreate,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
     box_data = box.model_dump()
     template_id = box_data.pop("template_id", None)
     
@@ -138,6 +145,8 @@ async def create_box(box: BoxCreate, db: AsyncSession = Depends(get_db)):
     db.add(db_box)
     await db.commit()
     await db.refresh(db_box)
+    
+    await log_user_action(db, current_user.username, "Register Box", f"Registered node SN: '{db_box.internal_sn}', MAC: '{db_box.mac_address}', IP: '{db_box.ip_address}'", request)
     
     if template_id:
         try:
@@ -211,14 +220,22 @@ async def update_box(box_id: UUID, box_in: BoxUpdate, db: AsyncSession = Depends
     return box
 
 @router.delete("/{box_id}")
-async def delete_box(box_id: UUID, db: AsyncSession = Depends(get_db)):
+async def delete_box(
+    box_id: UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
     result = await db.execute(select(BoxModel).where(BoxModel.id == box_id))
     box = result.scalars().first()
     if not box:
         raise HTTPException(status_code=404, detail="Box not found")
     
+    deleted_sn = box.internal_sn
+    deleted_mac = box.mac_address
     await db.delete(box)
     await db.commit()
+    await log_user_action(db, current_user.username, "Delete Box", f"Deleted node SN: '{deleted_sn}', MAC: '{deleted_mac}'", request)
     return {"status": "success", "id": box_id}
 
 @router.post("/upload-csv")
@@ -412,10 +429,20 @@ async def batch_apply_template(template_id: UUID, box_ids: List[UUID] = Body(...
     }
 
 @router.post("/batch/provision")
-async def batch_provision(box_ids: List[UUID] = Body(...), db: AsyncSession = Depends(get_db)):
+async def batch_provision(
+    box_ids: List[UUID] = Body(...),
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
     if not box_ids:
         return {"count": 0}
         
+    # Get box names/MACs for audit logging
+    result_boxes = await db.execute(select(BoxModel).where(BoxModel.id.in_(box_ids)))
+    affected_boxes = result_boxes.scalars().all()
+    affected_details = [f"SN:{b.internal_sn} (MAC:{b.mac_address})" for b in affected_boxes]
+
     # Update status to INSTALLING for all selected boxes
     stmt = (
         update(BoxModel)
@@ -428,6 +455,13 @@ async def batch_provision(box_ids: List[UUID] = Body(...), db: AsyncSession = De
     # Regenerate PXE configs
     await generate_pxe_config(db)
     
+    await log_user_action(
+        db, 
+        current_user.username, 
+        "Trigger Provisioning", 
+        f"Issued PXE install commands for {len(box_ids)} device(s): {', '.join(affected_details)}", 
+        request
+    )
     return {"status": "success", "count": len(box_ids)}
 
 

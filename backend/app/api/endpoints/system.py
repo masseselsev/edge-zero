@@ -1,13 +1,13 @@
 import os
 import time
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select
 from typing import List, Optional
 from pydantic import BaseModel
 
-from app.db.session import get_db
+from app.db.session import get_db, log_user_action
 from app.models.system_settings import SystemSettings
 from app.models.system_log import SystemLog
 from app.models.audit_log import AuditLog
@@ -116,7 +116,13 @@ async def get_settings(db: AsyncSession = Depends(get_db)):
     return result.scalars().all()
 
 @router.post("/settings")
-async def update_settings(settings_list: List[SettingItem], db: AsyncSession = Depends(get_db)):
+async def update_settings(
+    settings_list: List[SettingItem],
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    updates = []
     for item in settings_list:
         result = await db.execute(select(SystemSettings).where(SystemSettings.key == item.key))
         setting = result.scalars().first()
@@ -125,7 +131,10 @@ async def update_settings(settings_list: List[SettingItem], db: AsyncSession = D
         else:
             new_setting = SystemSettings(key=item.key, value=item.value)
             db.add(new_setting)
+        updates.append(f"{item.key}={item.value}")
+    
     await db.commit()
+    await log_user_action(db, current_user.username, "Update Settings", f"Updated preferences: {', '.join(updates)}", request)
     return {"status": "success"}
 
 @router.get("/bandwidth", response_model=BandwidthResponse)
@@ -245,6 +254,7 @@ async def get_users(
 @router.post("/users", response_model=UserResponseSchema)
 async def create_user(
     user_in: UserCreateSchema,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
@@ -261,11 +271,19 @@ async def create_user(
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
+    await log_user_action(
+        db, 
+        current_user.username, 
+        "Create User", 
+        f"Created administrator user '{new_user.username}' (role={new_user.role}, telegram_id={new_user.telegram_id})", 
+        request
+    )
     return new_user
 
 @router.delete("/users/{user_id}")
 async def delete_user(
     user_id: str,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
@@ -282,8 +300,10 @@ async def delete_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    deleted_username = user.username
     await db.delete(user)
     await db.commit()
+    await log_user_action(db, current_user.username, "Delete User", f"Deleted administrator user '{deleted_username}'", request)
     return {"status": "success"}
 
 # Profile update schemas
@@ -295,17 +315,22 @@ class UserProfileUpdateSchema(BaseModel):
 @router.put("/users/profile", response_model=UserResponseSchema)
 async def update_profile(
     payload: UserProfileUpdateSchema,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(deps.get_current_user)
 ):
+    details_list = []
     if payload.telegram_id is not None:
         current_user.telegram_id = payload.telegram_id
+        details_list.append(f"telegram_id={payload.telegram_id}")
     if payload.password is not None:
         if len(payload.password) < 6:
             raise HTTPException(status_code=400, detail="Password must be at least 6 characters long")
         current_user.hashed_password = security.get_password_hash(payload.password)
+        details_list.append("password updated")
     
     db.add(current_user)
     await db.commit()
     await db.refresh(current_user)
+    await log_user_action(db, current_user.username, "Update Profile", f"Updated profile details: {', '.join(details_list)}", request)
     return current_user

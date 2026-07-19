@@ -7,7 +7,7 @@ from sqlalchemy import select
 from app.api import deps
 from app.core import security
 from app.core.config import settings
-from app.db.session import get_db
+from app.db.session import get_db, log_user_action
 from app.models.user import User
 from pydantic import BaseModel
 
@@ -33,12 +33,14 @@ class UserResponse(BaseModel):
 async def login(
     payload: LoginPayload,
     response: Response,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ) -> Any:
     result = await db.execute(select(User).where(User.username == payload.username))
     user = result.scalars().first()
     
     if not user or not security.verify_password(payload.password, user.hashed_password):
+        await log_user_action(db, payload.username, "Login Failed", "Failed login attempt (invalid username or password)", request)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password"
@@ -59,6 +61,8 @@ async def login(
         secure=False, # Set to True in production with SSL/TLS
     )
     
+    await log_user_action(db, user.username, "Login", "User logged in successfully", request)
+    
     return {
         "access_token": token,
         "token_type": "bearer",
@@ -67,7 +71,13 @@ async def login(
     }
 
 @router.post("/logout")
-async def logout(response: Response):
+async def logout(
+    response: Response,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    await log_user_action(db, current_user.username, "Logout", "User logged out", request)
     response.delete_cookie(key="admin_session", httponly=True, samesite="lax")
     return {"status": "success"}
 

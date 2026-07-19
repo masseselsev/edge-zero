@@ -88,3 +88,24 @@ def setup_db_logging():
         l = logging.getLogger(name)
         if not any(isinstance(h, DBLoggingHandler) for h in l.handlers):
             l.addHandler(handler)
+
+
+from fastapi import Request
+
+async def log_user_action(db, username: str, action: str, details: str = None, request: Request = None):
+    ip_address = None
+    if request and hasattr(request, "client") and request.client:
+        ip_address = request.client.host
+    try:
+        from app.models.audit_log import AuditLog
+        log_entry = AuditLog(
+            username=username,
+            action=action,
+            details=details,
+            ip_address=ip_address
+        )
+        db.add(log_entry)
+        await db.commit()
+    except Exception as e:
+        import sys
+        print(f"Failed to log user action: {e}", file=sys.stderr)
