@@ -1,3 +1,4 @@
+import sys
 import asyncio
 import os
 from sqlalchemy import select
@@ -38,14 +39,12 @@ async def create_admin():
                 await db.commit()
                 print(f"Superadmin user '{username}' created successfully.")
         else:
-            print(f"Superadmin user already exists (username: '{superadmin.username}').")
-            # If the username changed in env, update the existing superadmin username & password
-            if superadmin.username != username:
-                print(f"Updating superadmin username from '{superadmin.username}' to '{username}'...")
-                superadmin.username = username
-                superadmin.hashed_password = get_password_hash(password)
-                await db.commit()
-                print("Superadmin credentials updated successfully.")
+            # Reset/update superadmin password whenever script is explicitly executed
+            print(f"Resetting superadmin '{superadmin.username}' credentials...")
+            superadmin.username = username
+            superadmin.hashed_password = get_password_hash(password)
+            await db.commit()
+            print(f"Superadmin credentials reset successfully (username: '{username}', password: '{password}').")
 
 if __name__ == "__main__":
     asyncio.run(create_admin())
