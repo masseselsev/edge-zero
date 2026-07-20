@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '../context/TranslationContext';
 import LanguageSelector from './LanguageSelector';
-import { Sun, Moon, User, ArrowDown, ArrowUp, LayoutDashboard, Server, Library, ScrollText, Terminal, Settings, Eye, Database, Sliders } from 'lucide-react';
+import { Sun, Moon, User, ArrowDown, ArrowUp, LayoutDashboard, Server, Library, ScrollText, Terminal, Settings, Eye, Database, Sliders, Cpu } from 'lucide-react';
 
 declare const __APP_VERSION__: string;
 
@@ -114,6 +114,7 @@ export default function Header({ activeTab, setActiveTab, currentUser, onLogout,
     { id: 'library', label: t('tabLibrary'), icon: <Library size={14} /> },
     { id: 'logs', label: t('tabLogs'), icon: <Terminal size={14} /> },
     { id: 'settings', label: t('tabSettings'), icon: <Settings size={14} /> },
+    { id: 'vsm2flasher', label: t('tabVsm2Flasher'), icon: <Cpu size={14} /> },
     { 
       id: 'edgebro', 
       label: t('tabEdgeBro'), 
