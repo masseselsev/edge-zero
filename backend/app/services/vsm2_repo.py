@@ -23,7 +23,7 @@ def sync_repo():
                 with repo.git.custom_environment(GIT_TERMINAL_PROMPT='0'):
                     repo.remotes.origin.fetch()
                     repo.git.reset('--hard', 'origin/main')
-                    repo.git.clean('-fdx')
+                    repo.git.clean('-fdx', '-e', 'controlboard/wheels')
             return True
         except Exception as e:
             logger.error(f"Repo sync failed: {e}")

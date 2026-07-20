@@ -222,10 +222,29 @@ async def console_connect(payload: ConsoleConnectRequest, current_user: User = D
                     stdin_sub, stdout_sub, stderr_sub = ssh.exec_command(f"mkdir -p ~/controlboard/{subfolder}")
                     await asyncio.to_thread(stdout_sub.channel.recv_exit_status)
                 await asyncio.to_thread(sftp.put, src, dest)
+                
+        # Upload offline wheels if they exist in repo cache
+        wheels_dir = os.path.join(REPO_CACHE_DIR, 'controlboard', 'wheels')
+        if os.path.isdir(wheels_dir):
+            stdin_whl, stdout_whl, stderr_whl = ssh.exec_command("mkdir -p ~/controlboard/wheels")
+            await asyncio.to_thread(stdout_whl.channel.recv_exit_status)
+            for whl_path in glob.glob(os.path.join(wheels_dir, "*.whl")):
+                filename = os.path.basename(whl_path)
+                await asyncio.to_thread(sftp.put, whl_path, f"controlboard/wheels/{filename}")
+                
         await asyncio.to_thread(sftp.close)
         
         # Check if environment is already configured, otherwise build it
-        check_cmd = "if [ -f ~/controlboard/env/bin/python3 ] && ~/controlboard/env/bin/python3 -c 'import serial, requests' 2>/dev/null; then echo 'OK'; else (python3.13 -m venv env || python3 -m venv env) && ./env/bin/pip install --timeout 3 --retries 1 pyserial requests; fi"
+        # Try local wheels first, then fallback to network index with fast-timeout
+        check_cmd = (
+            "if [ -f ~/controlboard/env/bin/python3 ] && ~/controlboard/env/bin/python3 -c 'import serial, requests' 2>/dev/null; then "
+            "  echo 'OK'; "
+            "else "
+            "  (python3.13 -m venv env || python3 -m venv env) && "
+            "  (./env/bin/pip install --no-index --find-links wheels/ pyserial requests || "
+            "   ./env/bin/pip install --timeout 3 --retries 1 pyserial requests); "
+            "fi"
+        )
         stdin_env, stdout_env, stderr_env = ssh.exec_command(f"cd ~/controlboard && {check_cmd}")
         exit_status = await asyncio.to_thread(stdout_env.channel.recv_exit_status)
         if exit_status != 0:
