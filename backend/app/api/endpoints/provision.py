@@ -470,7 +470,7 @@ async def get_boot_ipxe(mac: str, db: AsyncSession = Depends(get_db)):
             "echo -------------------------------------------------------------",
             "echo UNREGISTERED DEVICE DETECTED",
             f"echo MAC Address: {mac.upper()}",
-            "echo Please register this device in the Edge Z.E.R.O. dashboard.",
+            "echo Please register this device in the Edge-Z.E.R.O. dashboard.",
             "echo -------------------------------------------------------------",
             "sleep 10",
             f"chain http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{mac}/boot.ipxe"
@@ -519,7 +519,7 @@ async def get_boot_ipxe(mac: str, db: AsyncSession = Depends(get_db)):
             cmdline = f"initrd={initrd_file} auto=true priority=critical preseed/url=http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{mac}/preseed.cfg netcfg/choose_interface=auto"
 
         script = f"""#!ipxe
-echo Starting Edge Z.E.R.O. Network Installer for MAC {mac}
+echo Starting Edge-Z.E.R.O. Network Installer for MAC {mac}
 echo Using image: {image_dir} (Type: {box.os_image.os_type})
 kernel {kernel} {cmdline}
 initrd {initrd}

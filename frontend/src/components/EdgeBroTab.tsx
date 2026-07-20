@@ -39,7 +39,7 @@ export default function EdgeBroTab() {
         }
       } else {
         setStatus('error');
-        setErrorMsg('Failed to fetch status from Edge Z.E.R.O. server');
+        setErrorMsg('Failed to fetch status from Edge-Z.E.R.O. server');
       }
     } catch (err: any) {
       setStatus('error');

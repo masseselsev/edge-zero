@@ -1,8 +1,8 @@
-# Edge Z.E.R.O. — Zero-Touch Onboarding Hub
+# Edge-Z.E.R.O. — Zero-Touch Onboarding Hub
 
 **English** | [Русский](README_ru.md)
 
-**Edge Z.E.R.O.** is an industrial bare-metal automated provisioning platform (PXE/iPXE Zero-Touch Provisioning), centralized OS configuration management engine, and monitoring hub for road video recording devices and edge nodes.
+**Edge-Z.E.R.O.** is an industrial bare-metal automated provisioning platform (PXE/iPXE Zero-Touch Provisioning), centralized OS configuration management engine, and monitoring hub for road video recording devices and edge nodes.
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![React](https://img.shields.io/badge/Frontend-React%2019%20%2B%20TypeScript%20%2B%20Vite-indigo)

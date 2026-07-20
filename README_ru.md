@@ -1,8 +1,8 @@
-# Edge Z.E.R.O. — Zero-Touch Onboarding Hub
+# Edge-Z.E.R.O. — Zero-Touch Onboarding Hub
 
 [English](README.md) | **Русский**
 
-**Edge Z.E.R.O.** — промышленная платформа автоматизированной начальной загрузки (PXE/iPXE Zero-Touch Provisioning), централизованного управления конфигурациями ОС и мониторинга устройств дорожного видеофиксатора и крайних серверов (Edge Nodes).
+**Edge-Z.E.R.O.** — промышленная платформа автоматизированной начальной загрузки (PXE/iPXE Zero-Touch Provisioning), централизованного управления конфигурациями ОС и мониторинга устройств дорожного видеофиксатора и крайних серверов (Edge Nodes).
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![React](https://img.shields.io/badge/Frontend-React%2019%20%2B%20TypeScript%20%2B%20Vite-indigo)

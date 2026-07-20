@@ -55,7 +55,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           </div>
           <div>
             <h2 className="text-xl font-bold text-zinc-50 tracking-tight flex items-center justify-center gap-2">
-              <span className="bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2.5 py-0.5 rounded font-mono font-bold text-xs uppercase tracking-wider">Edge Z.E.R.O.</span>
+              <span className="bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2.5 py-0.5 rounded font-mono font-bold text-xs uppercase tracking-wider">Edge-Z.E.R.O.</span>
             </h2>
             <p className="text-[9px] text-zinc-500 font-semibold uppercase tracking-wider mt-1.5 font-mono">
               {getSubtitle()}

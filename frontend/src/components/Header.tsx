@@ -145,7 +145,7 @@ export default function Header({ activeTab, setActiveTab, currentUser, onLogout,
             </div>
             <div>
               <h1 className="text-base font-bold text-zinc-50 tracking-tight leading-none flex items-center gap-2">
-                <span className="bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded font-mono font-bold text-xs uppercase tracking-wider">Edge Z.E.R.O.</span>
+                <span className="bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded font-mono font-bold text-xs uppercase tracking-wider">Edge-Z.E.R.O.</span>
                 <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-mono font-bold">v{__APP_VERSION__}</span>
               </h1>
               <p className="text-[9px] text-zinc-500 font-semibold mt-1.5 uppercase tracking-wider">

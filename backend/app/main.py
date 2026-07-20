@@ -30,7 +30,7 @@ app.include_router(ssh_proxy.router, prefix="/api/ssh", tags=["ssh"])
 
 @app.get("/")
 def root():
-    return {"message": "Welcome to Edge Z.E.R.O. API"}
+    return {"message": "Welcome to Edge-Z.E.R.O. API"}
 
 async def monitor_heartbeats():
     import asyncio
