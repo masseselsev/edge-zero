@@ -47,6 +47,37 @@ export default function InventoryTab() {
     location_id: ''
   });
 
+  const [unregisteredMacs, setUnregisteredMacs] = useState<string[]>([]);
+  const [isMacLocked, setIsMacLocked] = useState(false);
+
+  const fetchUnregistered = async () => {
+    try {
+      const res = await fetch('/api/boxes/unregistered');
+      if (res.ok) {
+        setUnregisteredMacs(await res.json());
+      }
+    } catch (err) {
+      console.error('Failed to fetch unregistered MACs:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnregistered();
+    const interval = setInterval(fetchUnregistered, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleRegisterUnregistered = (mac: string) => {
+    setNewBox({
+      internal_sn: '',
+      mac_address: mac,
+      ip_address: '',
+      location_id: ''
+    });
+    setIsMacLocked(true);
+    setShowAddModal(true);
+  };
+
   const fetchData = async () => {
     try {
       const [boxRes, locRes, statsRes] = await Promise.all([
@@ -73,6 +104,17 @@ export default function InventoryTab() {
     return () => clearInterval(interval);
   }, [boxes]);
 
+  const handleCloseAddModal = () => {
+    setShowAddModal(false);
+    setIsMacLocked(false);
+    setNewBox({
+      internal_sn: '',
+      mac_address: '',
+      ip_address: '',
+      location_id: ''
+    });
+  };
+
   const handleAddBox = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -82,8 +124,7 @@ export default function InventoryTab() {
         body: JSON.stringify(newBox)
       });
       if (res.ok) {
-        setShowAddModal(false);
-        setNewBox({ internal_sn: '', mac_address: '', ip_address: '', location_id: '' });
+        handleCloseAddModal();
         fetchData();
       } else {
         const errorData = await res.json();
@@ -193,6 +234,29 @@ export default function InventoryTab() {
         </div>
       </div>
 
+      {/* Unregistered Devices Banner */}
+      {unregisteredMacs.length > 0 && (
+        <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex flex-col gap-3 animate-fade-in mb-4">
+          <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider">
+            <AlertTriangle size={14} className="animate-pulse" />
+            <span>Unregistered Devices Detected</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {unregisteredMacs.map(mac => (
+              <div key={mac} className="flex justify-between items-center p-2.5 bg-zinc-950/40 border border-zinc-900 rounded-lg gap-3">
+                <span className="font-mono text-xs text-zinc-300">{mac}</span>
+                <button
+                  onClick={() => handleRegisterUnregistered(mac)}
+                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 rounded-lg text-[10px] font-bold transition-all cursor-pointer shadow-md"
+                >
+                  [+] Register Box
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Filter & Search Toolbar */}
       <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-zinc-900/40 p-4 rounded-xl border border-zinc-800">
         <div className="relative flex-1">
@@ -275,7 +339,7 @@ export default function InventoryTab() {
             <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
               <h3 className="text-sm font-bold text-zinc-200">{t('addBox')}</h3>
               <button 
-                onClick={() => setShowAddModal(false)}
+                onClick={handleCloseAddModal}
                 className="text-zinc-500 hover:text-zinc-300 font-bold cursor-pointer"
               >
                 ✕
@@ -299,9 +363,10 @@ export default function InventoryTab() {
                 <input
                   type="text"
                   required
+                  disabled={isMacLocked}
                   value={newBox.mac_address}
                   onChange={(e) => setNewBox({...newBox, mac_address: e.target.value})}
-                  className="w-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg focus:border-indigo-500 outline-none"
+                  className={`w-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg focus:border-indigo-500 outline-none ${isMacLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                   placeholder="e.g. 00:11:22:33:44:55"
                 />
               </div>
@@ -334,7 +399,7 @@ export default function InventoryTab() {
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-850">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={handleCloseAddModal}
                   className="px-4 py-2 rounded-lg text-xs font-bold text-zinc-400 hover:text-zinc-200 cursor-pointer"
                 >
                   {t('cancel')}

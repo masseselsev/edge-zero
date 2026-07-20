@@ -456,7 +456,17 @@ async def get_boot_ipxe(mac: str, db: AsyncSession = Depends(get_db)):
     box = result.scalars().first()
     
     if not box:
-        return Response(content="#!ipxe\necho Box not found\nshell", media_type="text/plain")
+        script = [
+            "#!ipxe",
+            "echo -------------------------------------------------------------",
+            "echo UNREGISTERED DEVICE DETECTED",
+            f"echo MAC Address: {mac.upper()}",
+            "echo Please register this device in the Overwatch dashboard.",
+            "echo -------------------------------------------------------------",
+            "sleep 10",
+            f"chain http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{mac}/boot.ipxe"
+        ]
+        return Response(content="\n".join(script), media_type="text/plain")
 
     if box.status == BoxStatus.INSTALLING:
         preseed_url = f"http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{mac}/preseed.cfg"

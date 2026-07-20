@@ -525,3 +525,39 @@ async def get_provisioning_logs(
         }
         for log in logs
     ]
+
+@router.get("/unregistered", response_model=List[str])
+async def get_unregistered_devices(db: AsyncSession = Depends(get_db)):
+    import os
+    import re
+    
+    log_path = "/mnt/infra_config/dnsmasq.log"
+    if not os.path.exists(log_path):
+        return []
+        
+    macs_seen = set()
+    try:
+        with open(log_path, "r") as f:
+            lines = f.readlines()
+    except Exception:
+        return []
+        
+    mac_regex = re.compile(r"([0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2})")
+    
+    for line in reversed(lines):
+        if "dnsmasq-dhcp" in line and ("DHCPDISCOVER" in line or "DHCPREQUEST" in line or "DHCPINFORM" in line):
+            match = mac_regex.search(line)
+            if match:
+                mac = match.group(1).upper()
+                macs_seen.add(mac)
+                if len(macs_seen) >= 20:
+                    break
+                    
+    if not macs_seen:
+        return []
+        
+    result = await db.execute(select(BoxModel.mac_address))
+    registered_macs = set(str(m[0]).upper() for m in result.all() if m[0])
+    
+    unregistered = list(macs_seen - registered_macs)
+    return unregistered

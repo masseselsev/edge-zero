@@ -162,7 +162,7 @@ async def regenerate_dnsmasq_conf(db: AsyncSession):
         "# Logging",
         "log-dhcp",
         "log-queries",
-        "log-facility=-"
+        "log-facility=/mnt/infra_config/dnsmasq.log"
     ])
 
     conf_path = "/mnt/infra_config/dnsmasq.conf"
