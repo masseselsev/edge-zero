@@ -1,5 +1,5 @@
-# overwatch
-Edge provisioning
+# Edge Z.E.R.O.
+Zero-Touch Onboarding Hub
 
 ## Features
 - **Device Inventory**: Track devices with SN, MAC, IP.

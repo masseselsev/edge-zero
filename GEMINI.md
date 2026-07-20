@@ -1,6 +1,6 @@
-# Overwatch Project Context
+# Edge Z.E.R.O. Project Context
 
-Overwatch is a provisioning and orchestration system for road video-recording boxes.
+Edge Z.E.R.O. is a provisioning and orchestration system for road video-recording boxes.
 
 ## Architecture
 - **Backend:** FastAPI, SQLAlchemy, PostgreSQL.
