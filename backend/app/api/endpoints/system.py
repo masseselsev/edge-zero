@@ -231,9 +231,49 @@ async def update_settings(
         updates.append(f"{item.key}={item.value}")
     
     await db.commit()
-    await regenerate_dnsmasq_conf(db)
-    await log_user_action(db, current_user.username, "Update Settings", f"Updated preferences: {', '.join(updates)}", request)
-    return {"status": "success"}
+    await log_user_action(db, current_user.username, "UPDATE_SETTINGS", f"Updated settings: {', '.join(updates)}", request)
+    return {"status": "updated"}
+
+@router.post("/settings/generate-ssh-keypair")
+async def generate_ssh_keypair(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    """
+    Generates an Ed25519 SSH keypair on the Orchestrator server.
+    Saves DEFAULT_SSH_PUBLIC_KEY and ORCHESTRATOR_SSH_PRIVATE_KEY into SystemSettings.
+    Returns public_key and private_key for user inspection and optional download.
+    """
+    from cryptography.hazmat.primitives.asymmetric import ed25519
+    from cryptography.hazmat.primitives import serialization
+
+    priv = ed25519.Ed25519PrivateKey.generate()
+    pub = priv.public_key()
+
+    pub_ssh = pub.public_bytes(
+        encoding=serialization.Encoding.OpenSSH,
+        format=serialization.PublicFormat.OpenSSH
+    ).decode("utf-8").strip() + " edge-zero-orchestrator"
+
+    priv_pem = priv.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.OpenSSH,
+        encryption_algorithm=serialization.NoEncryption()
+    ).decode("utf-8").strip()
+
+    # Save both keys into SystemSettings
+    for k, v in [("DEFAULT_SSH_PUBLIC_KEY", pub_ssh), ("ORCHESTRATOR_SSH_PRIVATE_KEY", priv_pem)]:
+        res = await db.execute(select(SystemSettings).where(SystemSettings.key == k))
+        setting = res.scalars().first()
+        if setting:
+            setting.value = v
+        else:
+            db.add(SystemSettings(key=k, value=v))
+
+    await db.commit()
+    await log_user_action(db, current_user.username, "GENERATE_SSH_KEYPAIR", "Generated Master Ed25519 SSH Keypair", request)
+    return {"public_key": pub_ssh, "private_key": priv_pem}
 
 @router.get("/bandwidth", response_model=BandwidthResponse)
 def get_bandwidth() -> BandwidthResponse:

@@ -94,20 +94,37 @@ async def ssh_proxy(
     username = box.ssh_username or "root"
     password = box.ssh_password or ""
 
+    # Fetch orchestrator master SSH private key if configured
+    client_keys = None
+    from app.models.system_settings import SystemSettings
+    async with AsyncSessionLocal() as db:
+        res = await db.execute(select(SystemSettings).where(SystemSettings.key == "ORCHESTRATOR_SSH_PRIVATE_KEY"))
+        setting = res.scalars().first()
+        if setting and setting.value:
+            try:
+                client_keys = [asyncssh.import_private_key(setting.value)]
+            except Exception as e:
+                logger.warning("Failed to import orchestrator SSH private key: %s", e)
+
     await websocket.accept()
 
     # 3. Connect via asyncssh
     ssh_conn: asyncssh.SSHClientConnection | None = None
     channel = None
     try:
-        ssh_conn = await asyncssh.connect(
-            host,
-            port=port,
-            username=username,
-            password=password,
-            known_hosts=None,          # Don't verify host keys in this context
-            encoding=None,             # Raw bytes mode
-        )
+        connect_kwargs = {
+            "host": host,
+            "port": port,
+            "username": username,
+            "known_hosts": None,
+            "encoding": None,
+        }
+        if client_keys:
+            connect_kwargs["client_keys"] = client_keys
+        if password:
+            connect_kwargs["password"] = password
+
+        ssh_conn = await asyncssh.connect(**connect_kwargs)
         channel, _ = await ssh_conn.create_session(
             lambda: _WebSocketSSHSession(websocket),
             term_type="xterm-256color",

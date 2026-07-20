@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from '../context/TranslationContext';
-import { Save, Info, Shield, MapPin, Plus, Trash2, Edit, Network, Globe, Sliders } from 'lucide-react';
+import { Save, Info, Shield, MapPin, Plus, Trash2, Edit, Network, Globe, Sliders, Key, Download, Copy, Check, X } from 'lucide-react';
 
 interface SettingItem {
   key: string;
@@ -51,6 +52,53 @@ export default function ProfilesTab() {
     package_mirror: '',
     ssh_public_key: ''
   });
+
+  // Keypair Generator Modal State
+  const [generatingKey, setGeneratingKey] = useState(false);
+  const [keyModalData, setKeyModalData] = useState<{ public_key: string; private_key: string } | null>(null);
+  const [copiedPub, setCopiedPub] = useState(false);
+  const [copiedPriv, setCopiedPriv] = useState(false);
+
+  const handleGenerateKeypair = async (isLocationForm: boolean = false) => {
+    setGeneratingKey(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/system/settings/generate-ssh-keypair', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        updateSettingValue('DEFAULT_SSH_PUBLIC_KEY', data.public_key);
+        if (isLocationForm) {
+          setLocForm(prev => ({ ...prev, ssh_public_key: data.public_key }));
+        }
+        setKeyModalData(data);
+      } else {
+        alert('Failed to generate keypair.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Keypair generation error.');
+    } finally {
+      setGeneratingKey(false);
+    }
+  };
+
+  const handleDownloadPrivateKey = (privKey: string) => {
+    const blob = new Blob([privKey], { type: 'application/x-pem-file' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'id_ed25519';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const timezoneOptions = React.useMemo(() => {
     let zones: string[] = [];
@@ -429,7 +477,18 @@ export default function ProfilesTab() {
                     </div>
 
                     <div>
-                      <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">{t('settingsDefaultSsh')}</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[10px] uppercase font-bold text-zinc-500">{t('settingsDefaultSsh')}</label>
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateKeypair(false)}
+                          disabled={generatingKey}
+                          className="px-2.5 py-1 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                        >
+                          <Key size={11} className={generatingKey ? 'animate-spin' : ''} />
+                          <span>{generatingKey ? 'Generating...' : t('generateKeypair')}</span>
+                        </button>
+                      </div>
                       <textarea
                         rows={3}
                         value={getSetting('DEFAULT_SSH_PUBLIC_KEY')}
@@ -652,7 +711,18 @@ export default function ProfilesTab() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">SSH Authorized Key</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-500">SSH Authorized Key</label>
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateKeypair(true)}
+                      disabled={generatingKey}
+                      className="px-2.5 py-1 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                    >
+                      <Key size={11} className={generatingKey ? 'animate-spin' : ''} />
+                      <span>{generatingKey ? 'Generating...' : t('generateKeypair')}</span>
+                    </button>
+                  </div>
                   <textarea
                     rows={3}
                     value={locForm.ssh_public_key}
@@ -676,6 +746,108 @@ export default function ProfilesTab() {
           )}
         </div>
       </div>
+
+      {/* Keypair Generation Result Modal */}
+      {keyModalData && createPortal(
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-xl bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-modal-in">
+            <div className="p-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/40">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-indigo-400">
+                  <Key size={18} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-zinc-100">{t('keypairGeneratedTitle')}</h3>
+                  <p className="text-[10px] text-zinc-400 mt-0.5">Ed25519 Keypair generated & saved to Orchestrator</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setKeyModalData(null)}
+                className="p-1 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-850 transition-all cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 text-xs">
+              <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-[11px] text-indigo-300 leading-relaxed">
+                {t('keypairGeneratedDesc')}
+              </div>
+
+              {/* Public Key section */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] uppercase font-bold text-zinc-400">Public Key (baked into nodes)</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(keyModalData.public_key);
+                      setCopiedPub(true);
+                      setTimeout(() => setCopiedPub(false), 2000);
+                    }}
+                    className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer font-bold"
+                  >
+                    {copiedPub ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
+                    <span>{copiedPub ? 'Copied!' : t('copyPublicKey')}</span>
+                  </button>
+                </div>
+                <textarea
+                  readOnly
+                  rows={2}
+                  value={keyModalData.public_key}
+                  className="w-full bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-300 p-2.5 rounded-lg font-mono outline-none select-all"
+                />
+              </div>
+
+              {/* Private Key section */}
+              <div className="space-y-1.5 pt-2 border-t border-zinc-850">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] uppercase font-bold text-zinc-400">Private Key (Orchestrator & Admin SSH)</label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(keyModalData.private_key);
+                        setCopiedPriv(true);
+                        setTimeout(() => setCopiedPriv(false), 2000);
+                      }}
+                      className="text-[10px] text-zinc-400 hover:text-zinc-200 flex items-center gap-1 cursor-pointer font-bold"
+                    >
+                      {copiedPriv ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
+                      <span>{copiedPriv ? 'Copied!' : t('copyPrivateKey')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadPrivateKey(keyModalData.private_key)}
+                      className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[10px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                    >
+                      <Download size={11} />
+                      <span>{t('downloadPrivateKey')}</span>
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  readOnly
+                  rows={6}
+                  value={keyModalData.private_key}
+                  className="w-full bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 p-2.5 rounded-lg font-mono outline-none select-all"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 bg-zinc-900/40 border-t border-zinc-800 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setKeyModalData(null)}
+                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-750 text-zinc-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
