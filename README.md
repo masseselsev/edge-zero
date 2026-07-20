@@ -1,6 +1,8 @@
 # Edge Z.E.R.O. — Zero-Touch Onboarding Hub
 
-**Edge Z.E.R.O.** — промышленная платформа автоматизированной начальной загрузки (PXE/iPXE Zero-Touch Provisioning), централизованного управления конфигурациями ОС и мониторинга устройств дорожного видеофиксатора и краевных серверов (Edge Nodes).
+**English** | [Русский](README_ru.md)
+
+**Edge Z.E.R.O.** is an industrial bare-metal automated provisioning platform (PXE/iPXE Zero-Touch Provisioning), centralized OS configuration management engine, and monitoring hub for road video recording devices and edge nodes.
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 ![React](https://img.shields.io/badge/Frontend-React%2019%20%2B%20TypeScript%20%2B%20Vite-indigo)
@@ -9,45 +11,45 @@
 
 ---
 
-## 🌟 Основные возможности
+## 🌟 Key Features
 
 ### ⚡ Zero-Touch PXE Provisioning & Auto-Discovery
-* **Универсальная авто-загрузка:** Сервис `dnsmasq` отдаёт загрузчики `ipxe.efi` и `undionly.kpxe` по протоколам DHCP/TFTP.
-* **Автоматическая регистрация (Auto-Discovery):** Парсинг логов DHCP и обработка iPXE-запросов автоматически обнаруживают новые незарегистрированные устройства в сети без зацикливания загрузки.
-* **Режим ProxyDHCP:** Поддержка работы в сетях с имеющимися роутерами (MikroTik, Cisco и др.) без конфликтов IP-пулов.
-* **Динамические шаблоны:** Генерация установочных конфигураций `preseed.cfg` (Debian) и `user-data` (Ubuntu Subiquity) под конкретный MAC-адрес устройства.
+* **Universal Auto-Boot:** `dnsmasq` serves `ipxe.efi` and `undionly.kpxe` bootloaders via DHCP/TFTP.
+* **Automatic Discovery (Auto-Discovery):** Real-time DHCP log parser and iPXE loop handler automatically discover new unregistered hardware without infinite boot loops.
+* **ProxyDHCP Mode:** Operates seamlessly alongside existing network routers (MikroTik, Cisco, etc.) without DHCP pool conflicts.
+* **Dynamic Templates:** On-the-fly generation of `preseed.cfg` (Debian) and `user-data` (Ubuntu Subiquity) installation configurations customized per device MAC address.
 
-### 🖥️ Управление профайлами и визуальная настройка ОС (Profiles)
-* **Профили локаций:** Связывание устройств с гео-локациями и их специфическими сетевыми и региональными параметрами.
-* **Визуальный конфигуратор пресида:** Графическое управление локалью, часовым поясом, раскладкой клавиатуры, зеркалами пакетов, NTP, Gateway, DNS и публичными SSH-ключами.
-* **Безопасное хэширование:** Автоматическая криптографическая генерация SHA-512 crypt хэшей паролей root и пользовательских учёток на стороне сервера перед внедрением в образ.
+### 🖥️ Location Profiles & Visual OS Configurator (Profiles)
+* **Location Profiles:** Bind devices to physical geographic locations with specific network and regional presets.
+* **Visual Preseed Configurator:** Interactive management of Locale, Timezone, Keyboard layout, Package mirrors, NTP, Gateway, DNS, and SSH public keys.
+* **Transparent Password Hashing:** Server-side SHA-512 crypt password hashing for root and non-root user accounts before preseed template rendering.
 
-### 📊 Real-Time Логирование & Прогресс установки
-* **Приём Syslog (Debian):** Встроенный UDP-сервер логов (`5140/udp`) принимает детальный журнал Debian Installer (`d-i preseed/syslog-server`) по сети в режиме реального времени.
-* **HTTP Subiquity (Ubuntu):** Отслеживание статуса фаз установки Ubuntu через REST эндпоинт `/report`.
-* **Интерактивный ConsoleDrawer:** Панель консоли с 4-этапным индикатором прогресса установки (PXE Boot → OS Install → Run Scripts → Finalizing) и потоковым выводом сообщений.
+### 📊 Real-Time Installation Logs & Progress Tracker
+* **Syslog Receiver (Debian):** Embedded UDP syslog server (`5140/udp`) receives detailed streaming logs from Debian Installer (`d-i preseed/syslog-server`) in real time.
+* **Subiquity HTTP (Ubuntu):** Tracks high-level Ubuntu installation phases via REST `/report` endpoint.
+* **Interactive ConsoleDrawer:** Console drawer featuring a 4-stage live stepper (PXE Boot → OS Install → Run Scripts → Finalizing) and streaming log output.
 
-### 💻 Встроенный Веб-Терминал SSH
-* **xterm.js в браузере:** Полноценный терминал с авто-подгонкой размера окна (`@xterm/addon-fit`) и поддержкой цветовых палитр ANSI.
-* **WebSocket SSH Proxy:** Двунаправленный мост (`/api/ssh/{box_id}` + `asyncssh`) для прямого подключения к узлам в статусе `ACTIVE` или `MAINTENANCE`.
+### 💻 Web SSH Terminal
+* **Browser Terminal via xterm.js:** Full-featured terminal with automatic window auto-fitting (`@xterm/addon-fit`) and ANSI color support.
+* **WebSocket SSH Proxy:** Bidirectional proxy bridge (`/api/ssh/{box_id}` + `asyncssh`) for direct SSH terminal access to `ACTIVE` or `MAINTENANCE` nodes directly from the browser.
 
-### 🔍 Аппаратный аудит & Контроль целостности (Baseline Diff)
-* **Автоматический сбор спецификаций:** Исполнение постановочного скрипта диагностики (CPU, RAM, PCI-карты захвата, USB-хабы, последовательные порты `/dev/ttyS*`, диски, сетевые адаптеры).
-* **Сравнение с эталоном:** Визуальный интерфейс сравнения фактического оборудования с принятым эталоном (Hardware Baseline) с подсветкой подмен или повреждений.
-* **Авто-контроль доступности (Heartbeats):** Фоновый мониторинг связи с серверами. При обрыве связи сервер переводится в статус `MAINTENANCE` с отправкой оповещений.
+### 🔍 Hardware Inspection & Integrity Audits (Baseline Diff)
+* **Automated Diagnostics:** Post-install diagnostic collector captures full hardware specs (CPU, RAM, PCI video capture cards, USB hubs, `/dev/ttyS*` serial ports, storage, NICs).
+* **Baseline Comparison (Diff):** Interactive visual diff modal highlighting hardware additions, removals, or tampering relative to the accepted baseline.
+* **Heartbeat Monitoring:** Background health checker automatically flags unreachable nodes as `MAINTENANCE` and sends alerts.
 
-### 🔄 Интеграция с кластером бэкапов (Edge B.R.O.)
-* **Синхронизация узлов:** Автоматическое сопоставление развёрнутых серверов с панелью резервного копирования Edge B.R.O.
-* **Зачисление в один клик:** Экспорт параметров авторизации и регистрация узлов в системе бэкапов напрямую из интерфейса.
+### 🔄 Backup Cluster Synchronization (Edge B.R.O.)
+* **Node Alignment:** Matches provisioned devices against the Edge B.R.O. backup orchestrator cluster.
+* **One-Click Enrollment:** Direct registration and auth credential transfer to the backup cluster in one click.
 
-### 🔔 Безопасность и оповещения
-* **Ролевая модель:** Разграничение прав доступа для администраторов, операторов и наблюдателей.
-* **Персональные уведомления Telegram:** Индивидуальная привязка `telegram_id` для мгновенных оповещений инженеров при успешном вводе устройства в строй.
-* **Системный аудит:** Журналирование действий пользователей и событий сервера в базе данных.
+### 🔔 Security & Alerting
+* **Role-Based Access Control:** Configurable user roles (Administrator, Operator, Viewer).
+* **Telegram Notifications:** Individual `telegram_id` subscriptions for instant alerts when a device transitions to active status.
+* **Audit Logging:** System and user activity logs stored in PostgreSQL and viewable in the UI.
 
 ---
 
-## 🛠 Архитектурная схема
+## 🛠 System Architecture
 
 ```
                                ┌────────────────────────────────────────┐
@@ -72,7 +74,7 @@
 
 ---
 
-## 🚦 Жизненный цикл устройства
+## 🚦 Device Lifecycle
 
 ```
   ┌───────────────┐        ┌───────────────┐        ┌───────────────┐        ┌───────────────┐
@@ -81,47 +83,48 @@
   └───────────────┘        └───────────────┘        └───────────────┘        └───────────────┘
 ```
 
-1. **Обнаружение:** Новое физическое устройство подключается к сети и запрашивает PXE-загрузку. Оркестратор фиксирует MAC-адрес и вносит устройство в базу в статусе `NEW`.
-2. **Конфигурирование:** Оператор присваивает устройству серийный номер, выбирает локацию и образ ОС (Debian/Ubuntu).
-3. **Установка:** При перезагрузке бокс скачивает дистрибутив по TFTP/HTTP, передаёт живые логи установки на бэкенд и исполняет постановочные скрипты.
-4. **Ввод в эксплуатацию:** Устройство отправляет финальный коллбэк, переходит в статус `ACTIVE`, сохраняет аппаратный профиль и регистрируется в системе бэкапов Edge B.R.O.
+1. **Discovery:** A physical node powers on and issues a PXE DHCP request. Edge Z.E.R.O. captures the MAC address and registers it as `NEW`.
+2. **Configuration:** Operator assigns internal SN, selects Location, and chooses OS Image (Debian/Ubuntu).
+3. **Installation:** On reboot, the device fetches TFTP/HTTP boot files, streams live syslog data, and executes `init.sh` post-install scripts.
+4. **Active Deployment:** Device sends final callback, transitions to `ACTIVE`, saves hardware baseline, and registers in Edge B.R.O.
 
 ---
 
-## 📦 Быстрый запуск
+## 📦 Quick Start
 
-### Зависимости
+### Prerequisites
 * **Docker Engine** 24.0+
 * **Docker Compose** 2.20+
 
-### Развёртывание
+### Deployment
 
-1. Клонируйте репозиторий:
+1. Clone repository:
    ```bash
    git clone https://github.com/masseselsev/edge-zero.git
    cd edge-zero
    ```
 
-2. Запустите комплекс контейнеров:
+2. Launch Docker stack:
    ```bash
    docker compose up -d --build
    ```
 
-3. Откройте веб-интерфейс:
-   * **Веб-интерфейс:** http://localhost:5555
-   * **Документация API:** http://localhost:7000/docs
+3. Access web interface:
+   * **Web UI:** http://localhost:5555
+   * **API Docs:** http://localhost:7000/docs
 
-### Данные для первого входа
-* **Логин:** `admin`
-* **Пароль:** `q1w2e3r4`
+### Default Credentials
+On initial fresh database creation:
+* **Username:** `admin`
+* **Password:** `q1w2e3r4` *(or `admin123` on previously deployed DB volumes)*
 
-Для сброса пароля суперадминистратора:
+To reset the superadmin password:
 ```bash
 docker compose exec overwatch-core python /app/create_admin.py
 ```
 
 ---
 
-## 📄 Лицензия
+## 📄 License
 
-Проект распространяется под лицензией MIT.
+Distributed under the MIT License.
