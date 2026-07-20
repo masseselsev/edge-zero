@@ -190,7 +190,9 @@ async def console_connect(payload: ConsoleConnectRequest, current_user: User = D
         # Automatically detect correct serial port on target box
         stdin, stdout, stderr = ssh.exec_command("ls -1 /dev/ttyUSB* /dev/ttyACM* 2>/dev/null")
         ports = [line.strip() for line in stdout.read().decode().split('\n') if line.strip()]
-        target_port = ports[0] if ports else "/dev/ttyUSB0"
+        if not ports:
+            raise HTTPException(status_code=404, detail="VSM2 controller not found (no serial ports /dev/ttyUSB* or /dev/ttyACM* detected on the target box).")
+        target_port = ports[0]
         
         channel = ssh.invoke_shell()
         channel.send(f"sg dialout -c 'cd ~/controlboard && ~/controlboard/env/bin/python3 -u app.py'\n")
@@ -207,6 +209,8 @@ async def console_connect(payload: ConsoleConnectRequest, current_user: User = D
             out = channel.recv(4096).decode('utf-8', errors='ignore')
             return {"status": "connected", "banner": clean_ansi(out)}
         return {"status": "connected", "banner": "Console connection established"}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -248,7 +252,9 @@ async def console_batch_read(payload: DumpRequest, current_user: User = Depends(
         # Automatically detect correct serial port on target box
         stdin, stdout, stderr = ssh.exec_command("ls -1 /dev/ttyUSB* /dev/ttyACM* 2>/dev/null")
         ports = [line.strip() for line in stdout.read().decode().split('\n') if line.strip()]
-        target_port = ports[0] if ports else "/dev/ttyUSB0"
+        if not ports:
+            raise HTTPException(status_code=404, detail="VSM2 controller not found (no serial ports /dev/ttyUSB* or /dev/ttyACM* detected on the target box).")
+        target_port = ports[0]
         
         results = {}
         for p in payload.params:
@@ -259,5 +265,7 @@ async def console_batch_read(payload: DumpRequest, current_user: User = Depends(
             results[p] = out if out else f"ERROR: {err}"
         ssh.close()
         return {"status": "success", "results": results}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
