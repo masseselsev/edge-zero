@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Terminal, Loader2, RefreshCw, CheckCircle2, Circle } from 'lucide-react';
+import { X, Terminal, Loader2, RefreshCw, CheckCircle2, Circle, Wifi } from 'lucide-react';
+import SshTerminal from './SshTerminal';
 
 interface LogEntry {
   id: string;
@@ -11,6 +12,7 @@ interface LogEntry {
 interface ConsoleDrawerProps {
   boxId: string;
   boxSn: string;
+  boxStatus: string;
   progress: number;
   onClose: () => void;
 }
@@ -37,7 +39,9 @@ const formatTime = (iso: string): string => {
   return d.toLocaleTimeString('en-GB', { hour12: false });
 };
 
-export default function ConsoleDrawer({ boxId, boxSn, progress, onClose }: ConsoleDrawerProps) {
+export default function ConsoleDrawer({ boxId, boxSn, boxStatus, progress, onClose }: ConsoleDrawerProps) {
+  const canSsh = boxStatus === 'ACTIVE' || boxStatus === 'MAINTENANCE';
+  const [activeTab, setActiveTab] = useState<'logs' | 'ssh'>('logs');
   const getStepState = (step: number) => {
     const currentProgress = progress || 0;
     if (step === 1) {
@@ -163,6 +167,34 @@ export default function ConsoleDrawer({ boxId, boxSn, progress, onClose }: Conso
             </div>
           </div>
 
+          {/* Tab switcher */}
+          <div className="flex items-center gap-1 bg-zinc-950 border border-zinc-800 rounded-lg p-0.5 mx-3">
+            <button
+              onClick={() => setActiveTab('logs')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                activeTab === 'logs'
+                  ? 'bg-zinc-800 text-zinc-100'
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              <Terminal size={11} />
+              <span>Logs</span>
+            </button>
+            {canSsh && (
+              <button
+                onClick={() => setActiveTab('ssh')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                  activeTab === 'ssh'
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                <Wifi size={11} />
+                <span>SSH</span>
+              </button>
+            )}
+          </div>
+
           <div className="flex items-center gap-3">
             {/* Progress bar */}
             {progress > 0 && (
@@ -196,49 +228,62 @@ export default function ConsoleDrawer({ boxId, boxSn, progress, onClose }: Conso
           </div>
         </div>
 
-        {/* Live Stepper Indicator */}
-        <div className="px-6 py-4 bg-zinc-950 border-b border-zinc-900 flex items-center justify-between gap-1 overflow-x-auto">
-          {renderStep(1, "PXE Boot")}
-          {renderConnector(1)}
-          {renderStep(2, "OS Install")}
-          {renderConnector(2)}
-          {renderStep(3, "Run Scripts")}
-          {renderConnector(3)}
-          {renderStep(4, "Finalizing")}
-        </div>
+        {/* Live Stepper Indicator — only in logs tab */}
+        {activeTab === 'logs' && (
+          <div className="px-6 py-4 bg-zinc-950 border-b border-zinc-900 flex items-center justify-between gap-1 overflow-x-auto">
+            {renderStep(1, "PXE Boot")}
+            {renderConnector(1)}
+            {renderStep(2, "OS Install")}
+            {renderConnector(2)}
+            {renderStep(3, "Run Scripts")}
+            {renderConnector(3)}
+            {renderStep(4, "Finalizing")}
+          </div>
+        )}
+
+        {/* SSH Terminal */}
+        {activeTab === 'ssh' && canSsh && (
+          <div className="flex flex-col flex-1 min-h-0 p-2">
+            <SshTerminal boxId={boxId} />
+          </div>
+        )}
 
         {/* Log body */}
-        <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-0.5 font-mono text-[11px] leading-relaxed">
-          {logs.length === 0 && !loading && (
-            <p className="text-zinc-600 italic py-4 text-center">Waiting for installer reports…</p>
-          )}
-          {logs.map((log) => (
-            <div key={log.id} className="flex gap-3 group hover:bg-white/[0.02] px-1 rounded">
-              <span className="shrink-0 text-zinc-600 group-hover:text-zinc-500 transition-colors select-none">
-                {formatTime(log.created_at)}
-              </span>
-              <span className={`${getLineClass(log.message)} break-all`}>
-                {log.message}
-              </span>
-            </div>
-          ))}
-          <div ref={bottomRef} />
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center gap-2 px-5 py-2"
-          style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
-          <span className="text-[10px] text-zinc-600 font-mono">
-            Live · polling every 2s
-            {lastFetched && (
-              <span className="ml-2 text-zinc-700">
-                · updated {lastFetched.toLocaleTimeString('en-GB', { hour12: false })}
-              </span>
+        {activeTab === 'logs' && (
+          <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-0.5 font-mono text-[11px] leading-relaxed">
+            {logs.length === 0 && !loading && (
+              <p className="text-zinc-600 italic py-4 text-center">Waiting for installer reports…</p>
             )}
-          </span>
-        </div>
+            {logs.map((log) => (
+              <div key={log.id} className="flex gap-3 group hover:bg-white/[0.02] px-1 rounded">
+                <span className="shrink-0 text-zinc-600 group-hover:text-zinc-500 transition-colors select-none">
+                  {formatTime(log.created_at)}
+                </span>
+                <span className={`${getLineClass(log.message)} break-all`}>
+                  {log.message}
+                </span>
+              </div>
+            ))}
+            <div ref={bottomRef} />
+          </div>
+        )}
+
+        {/* Footer — only shown in logs tab */}
+        {activeTab === 'logs' && (
+          <div className="flex items-center gap-2 px-5 py-2"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+            <span className="text-[10px] text-zinc-600 font-mono">
+              Live · polling every 2s
+              {lastFetched && (
+                <span className="ml-2 text-zinc-700">
+                  · updated {lastFetched.toLocaleTimeString('en-GB', { hour12: false })}
+                </span>
+              )}
+            </span>
+          </div>
+        )}
       </div>
     </div>,
     document.body

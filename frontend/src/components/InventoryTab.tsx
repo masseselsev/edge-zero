@@ -39,7 +39,7 @@ export default function InventoryTab() {
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
-  const [consoleBox, setConsoleBox] = useState<{ id: string; sn: string; progress: number } | null>(null);
+  const [consoleBox, setConsoleBox] = useState<{ id: string; sn: string; status: string; progress: number } | null>(null);
   const [newBox, setNewBox] = useState({
     internal_sn: '',
     mac_address: '',
@@ -151,7 +151,7 @@ export default function InventoryTab() {
     if (box.status === 'INSTALLING') {
       return (
         <button
-          onClick={() => setConsoleBox({ id: box.id, sn: box.internal_sn, progress: box.installation_progress })}
+          onClick={() => setConsoleBox({ id: box.id, sn: box.internal_sn, status: box.status, progress: box.installation_progress })}
           className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20 transition-colors cursor-pointer"
           title="Click to open installation console"
         >
@@ -166,6 +166,18 @@ export default function InventoryTab() {
       ACTIVE: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
       MAINTENANCE: 'bg-rose-500/10 text-rose-400 border-rose-500/20'
     };
+    if (box.status === 'ACTIVE' || box.status === 'MAINTENANCE') {
+      return (
+        <button
+          onClick={() => setConsoleBox({ id: box.id, sn: box.internal_sn, status: box.status, progress: box.installation_progress })}
+          className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border hover:brightness-125 transition-all cursor-pointer ${badges[box.status]}`}
+          title="Click to open SSH terminal"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0" />
+          {box.status}
+        </button>
+      );
+    }
     return (
       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badges[box.status] || badges.NEW}`}>
         {box.status}
@@ -421,6 +433,7 @@ export default function InventoryTab() {
         <ConsoleDrawer
           boxId={consoleBox.id}
           boxSn={consoleBox.sn}
+          boxStatus={consoleBox.status}
           progress={consoleBox.progress}
           onClose={() => setConsoleBox(null)}
         />

@@ -48,6 +48,10 @@ d-i partman/confirm_nooverwrite boolean true
 tasksel tasksel/first multiselect standard, ssh-server
 d-i pkgsel/include string curl wget
 
+# Real-time syslog forwarding — streams d-i logs to the orchestrator UDP:5140
+d-i preseed/syslog-server string {{ api_host }}
+d-i preseed/syslog-port string 5140
+
 # Boot loader
 d-i grub-installer/only_debian boolean true
 d-i grub-installer/bootdev string default

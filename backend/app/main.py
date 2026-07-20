@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from app.core.config import settings
 
-from app.api.endpoints import provision, boxes, library, device_groups, system, locations, auth, recovery, init_scripts
+from app.api.endpoints import provision, boxes, library, device_groups, system, locations, auth, recovery, init_scripts, ssh_proxy
 from app.db.session import setup_db_logging
 
 setup_db_logging()
@@ -26,6 +26,7 @@ app.include_router(library.router, prefix="/api/library", tags=["library"])
 app.include_router(device_groups.router, prefix="/api/device-groups", tags=["device-groups"])
 app.include_router(locations.router, prefix="/api/locations", tags=["locations"])
 app.include_router(system.router, prefix="/api/system", tags=["system"])
+app.include_router(ssh_proxy.router, prefix="/api/ssh", tags=["ssh"])
 
 @app.get("/")
 def root():
@@ -65,4 +66,6 @@ async def monitor_heartbeats():
 @app.on_event("startup")
 async def startup_event():
     import asyncio
+    from app.services.syslog_listener import start_syslog_listener
     asyncio.create_task(monitor_heartbeats())
+    asyncio.create_task(start_syslog_listener())
