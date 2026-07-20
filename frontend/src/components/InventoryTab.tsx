@@ -367,6 +367,9 @@ export default function InventoryTab() {
           <BoxDetailsModal
             box={box}
             onClose={() => setSelectedBoxId(null)}
+            onUpdateBox={(updatedBox) => {
+              setBoxes(prev => prev.map(b => b.id === updatedBox.id ? updatedBox : b));
+            }}
           />
         ) : null;
       })()}

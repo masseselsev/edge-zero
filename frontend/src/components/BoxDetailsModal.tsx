@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, Server, Shield, Network, HardDrive, Cpu, Terminal, FileText, Cpu as ChipIcon, List } from 'lucide-react';
+import { X, Server, Shield, Network, HardDrive, Cpu, Terminal, FileText, Cpu as ChipIcon, List, ShieldAlert, Loader2 } from 'lucide-react';
 
 interface Component {
   id: string;
@@ -12,7 +12,7 @@ interface Component {
 }
 
 interface Location {
-  id?: string;
+  id: string;
   name: string;
   timezone?: string;
 }
@@ -34,15 +34,115 @@ interface Box {
     pci_devices?: string;
     serial_ports?: string;
   } | null;
-  components: Component[];
+  hardware_baseline: {
+    cpu?: string;
+    memory?: string;
+    disk?: string;
+    interfaces?: string;
+    usb_devices?: string;
+    serial_ports?: string;
+  } | null;
+  components: any[];
+  last_seen: string | null;
 }
 
 interface BoxDetailsModalProps {
   box: Box;
   onClose: () => void;
+  onUpdateBox?: (updatedBox: Box) => void;
 }
 
-export default function BoxDetailsModal({ box, onClose }: BoxDetailsModalProps) {
+export default function BoxDetailsModal({ box, onClose, onUpdateBox }: BoxDetailsModalProps) {
+  const [updating, setUpdating] = React.useState(false);
+
+  const computeHardwareDiff = (baseline: any, inventory: any) => {
+    if (!baseline || !inventory) return [];
+    const diffs: string[] = [];
+
+    const parseMemoryGb = (mStr: string): number => {
+      const match = mStr.match(/([\d\.]+)\s*([a-zA-Z]*)/);
+      if (!match) return 0;
+      const val = parseFloat(match[1]);
+      const unit = match[2].toLowerCase();
+      if (unit.includes('m')) return val / 1024;
+      if (unit.includes('t')) return val * 1024;
+      return val;
+    };
+
+    // 1. Memory Check
+    const baseMem = baseline.memory || '';
+    const currMem = inventory.memory || '';
+    if (baseMem && currMem) {
+      const baseGb = parseMemoryGb(baseMem);
+      const currGb = parseMemoryGb(currMem);
+      if (baseGb > 0 && currGb > 0 && Math.abs(baseGb - currGb) > 1.0) {
+        diffs.push(`Memory size changed: ${currMem} (Expected: ${baseMem})`);
+      }
+    }
+
+    // 2. CPU Check
+    const baseCpu = (baseline.cpu || '').trim();
+    const currCpu = (inventory.cpu || '').trim();
+    if (baseCpu && currCpu && baseCpu !== currCpu) {
+      diffs.push(`Processor model changed: ${currCpu} (Expected: ${baseCpu})`);
+    }
+
+    // 3. Disk Check
+    const baseDisk = (baseline.disk || '').trim();
+    const currDisk = (inventory.disk || '').trim();
+    if (baseDisk && currDisk && baseDisk !== currDisk) {
+      diffs.push(`Storage configuration changed: ${currDisk} (Expected: ${baseDisk})`);
+    }
+
+    // 4. PCI Devices
+    const basePci = new Set((baseline.pci_devices || '').split(';').map((s: string) => s.trim()).filter(Boolean));
+    const currPci = new Set((inventory.pci_devices || '').split(';').map((s: string) => s.trim()).filter(Boolean));
+    Array.from(basePci).forEach((item: any) => {
+      if (!currPci.has(item)) diffs.push(`Missing PCI Device: ${item}`);
+    });
+
+    // 5. USB Devices
+    const baseUsb = new Set((baseline.usb_devices || '').split(',').map((s: string) => s.trim()).filter(Boolean));
+    const currUsb = new Set((inventory.usb_devices || '').split(',').map((s: string) => s.trim()).filter(Boolean));
+    Array.from(baseUsb).forEach((item: any) => {
+      if (!currUsb.has(item)) diffs.push(`Missing USB Device: ${item}`);
+    });
+
+    // 6. Serial Ports
+    const baseSerial = new Set((baseline.serial_ports || '').split(',').map((s: string) => s.trim()).filter(Boolean));
+    const currSerial = new Set((inventory.serial_ports || '').split(',').map((s: string) => s.trim()).filter(Boolean));
+    Array.from(baseSerial).forEach((item: any) => {
+      if (!currSerial.has(item)) diffs.push(`Missing Serial Port: ${item}`);
+    });
+
+    // 7. Network Interfaces
+    const getIfName = (s: string) => s.split('(')[0].trim();
+    const baseIfs = new Set((baseline.interfaces || '').split(',').map((s: string) => getIfName(s)).filter(Boolean));
+    const currIfs = new Set((inventory.interfaces || '').split(',').map((s: string) => getIfName(s)).filter(Boolean));
+    Array.from(baseIfs).forEach((item: any) => {
+      if (!currIfs.has(item)) diffs.push(`Missing Network Interface: ${item}`);
+    });
+
+    return diffs;
+  };
+
+  const mismatches = computeHardwareDiff(box.hardware_baseline, box.hardware_inventory);
+
+  const handleAcceptBaseline = async () => {
+    setUpdating(true);
+    try {
+      const response = await fetch(`/api/boxes/${box.id}/accept-baseline`, { method: 'POST' });
+      if (response.ok) {
+        const updated = await response.json();
+        if (onUpdateBox) onUpdateBox(updated);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const getStatusClass = (status: Box['status']) => {
     const badges = {
       NEW: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
@@ -92,6 +192,31 @@ export default function BoxDetailsModal({ box, onClose }: BoxDetailsModalProps) 
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Hardware Integrity Warning Banner */}
+          {box.status === 'MAINTENANCE' && mismatches.length > 0 && (
+            <div className="lg:col-span-3 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in mb-2">
+              <div className="flex gap-3">
+                <ShieldAlert className="text-rose-400 flex-shrink-0 mt-0.5" size={18} />
+                <div>
+                  <h4 className="text-xs font-bold text-rose-300 uppercase tracking-wider">Hardware Integrity Compromised</h4>
+                  <ul className="list-disc pl-4 text-[11px] text-rose-200/80 mt-1.5 space-y-1 font-mono">
+                    {mismatches.map((m, idx) => (
+                      <li key={idx}>{m}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              <button
+                onClick={handleAcceptBaseline}
+                disabled={updating}
+                className="px-3.5 py-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              >
+                {updating && <Loader2 size={12} className="animate-spin" />}
+                <span>Accept New Baseline</span>
+              </button>
+            </div>
+          )}
+
           {/* Left Column: Specs and Meta */}
           <div className="space-y-5 lg:col-span-1 border-r border-zinc-800/50 pr-0 lg:pr-6">
             <div className="space-y-4">

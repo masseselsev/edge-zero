@@ -219,6 +219,44 @@ async def update_box(box_id: UUID, box_in: BoxUpdate, db: AsyncSession = Depends
     box = result.scalars().first()
     return box
 
+@router.post("/{box_id}/accept-baseline", response_model=Box)
+async def accept_hardware_baseline(
+    box_id: UUID, 
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(deps.get_current_user)
+):
+    result = await db.execute(select(BoxModel).where(BoxModel.id == box_id))
+    box = result.scalars().first()
+    if box is None:
+        raise HTTPException(status_code=404, detail="Box not found")
+        
+    if not box.hardware_inventory:
+        raise HTTPException(status_code=400, detail="No hardware inventory reported yet")
+        
+    box.hardware_baseline = box.hardware_inventory
+    box.status = BoxStatus.ACTIVE
+    
+    await db.commit()
+    
+    # Reload with relationships
+    result = await db.execute(
+        select(BoxModel)
+        .options(
+            selectinload(BoxModel.components).selectinload(ComponentModel.definition),
+            selectinload(BoxModel.device_groups),
+            selectinload(BoxModel.location),
+            selectinload(BoxModel.os_image)
+        )
+        .where(BoxModel.id == box_id)
+    )
+    box = result.scalars().first()
+    
+    # Audit log
+    await log_user_action(db, current_user.username, "UPDATE_BASELINE", f"Accepted hardware baseline for box {box.internal_sn}", request=request)
+    
+    return box
+
 @router.delete("/{box_id}")
 async def delete_box(
     box_id: UUID,

@@ -241,6 +241,7 @@ class HardwareReport(BaseModel):
     serial_ports: Optional[str] = None
 
 def check_hardware_discrepancies(baseline: dict, current: dict) -> list[str]:
+    import re
     discrepancies = []
     
     # 1. PCI Devices
@@ -270,6 +271,40 @@ def check_hardware_discrepancies(baseline: dict, current: dict) -> list[str]:
     missing_ifs = baseline_ifs - current_ifs
     for i in missing_ifs:
         discrepancies.append(f"Missing Network Interface: {i}")
+
+    # 5. CPU Model
+    base_cpu = baseline.get("cpu", "").strip()
+    curr_cpu = current.get("cpu", "").strip()
+    if base_cpu and curr_cpu and base_cpu != curr_cpu:
+        discrepancies.append(f"CPU model changed: {curr_cpu} (Baseline: {base_cpu})")
+
+    # 6. Disk capacity
+    base_disk = baseline.get("disk", "").strip()
+    curr_disk = current.get("disk", "").strip()
+    if base_disk and curr_disk and base_disk != curr_disk:
+        discrepancies.append(f"Storage changed: {curr_disk} (Baseline: {base_disk})")
+
+    # 7. Memory Capacity with tolerance (> 1.0 GiB)
+    base_mem_str = baseline.get("memory", "").strip()
+    curr_mem_str = current.get("memory", "").strip()
+    
+    def parse_memory_gb(m_str: str) -> float:
+        match = re.search(r"([\d\.]+)\s*([a-zA-Z]*)", m_str)
+        if not match:
+            return 0.0
+        val = float(match.group(1))
+        unit = match.group(2).lower()
+        if "m" in unit:
+            return val / 1024.0
+        if "t" in unit:
+            return val * 1024.0
+        return val
+
+    if base_mem_str and curr_mem_str:
+        base_gb = parse_memory_gb(base_mem_str)
+        curr_gb = parse_memory_gb(curr_mem_str)
+        if base_gb > 0 and curr_gb > 0 and abs(base_gb - curr_gb) > 1.0:
+            discrepancies.append(f"Memory size changed: {curr_mem_str} (Baseline: {base_mem_str})")
 
     return discrepancies
 
