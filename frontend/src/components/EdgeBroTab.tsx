@@ -39,7 +39,7 @@ export default function EdgeBroTab() {
         }
       } else {
         setStatus('error');
-        setErrorMsg('Failed to fetch status from Overwatch server');
+        setErrorMsg('Failed to fetch status from Edge Z.E.R.O. server');
       }
     } catch (err: any) {
       setStatus('error');
@@ -144,7 +144,7 @@ export default function EdgeBroTab() {
               <th className="px-6 py-3.5">Device SN (Hostname)</th>
               <th className="px-6 py-3.5">MAC Address</th>
               <th className="px-6 py-3.5">IP Address</th>
-              <th className="px-6 py-3.5">Overwatch Status</th>
+              <th className="px-6 py-3.5">Hub Status</th>
               <th className="px-6 py-3.5">B.R.O. Backup Status</th>
               <th className="px-6 py-3.5">Last Backup</th>
               <th className="px-6 py-3.5 text-right">Action</th>
