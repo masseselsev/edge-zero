@@ -253,19 +253,51 @@ async def console_connect(payload: ConsoleConnectRequest, current_user: User = D
             
         stdin_usr, stdout_usr, stderr_usr = ssh.exec_command(f"echo '{payload.password}' | sudo -S usermod -aG dialout {payload.username}")
         await asyncio.to_thread(stdout_usr.channel.recv_exit_status)
-        
+         
         # Automatically detect correct serial port on target box
-        stdin, stdout, stderr = ssh.exec_command("ls -1 /dev/ttyUSB* 2>/dev/null")
+        stdin, stdout, stderr = ssh.exec_command("ls -1 /dev/ttyUSB* /dev/ttyACM* 2>/dev/null")
         await asyncio.to_thread(stdout.channel.recv_exit_status)
         ports = [line.strip() for line in (await asyncio.to_thread(stdout.read)).decode().split('\n') if line.strip()]
         if not ports:
-            raise HTTPException(status_code=404, detail="VSM2 controller not found (no serial ports /dev/ttyUSB* detected on the target box).")
-        target_port = ports[0]
-        
+            raise HTTPException(status_code=404, detail="VSM2 controller not found (no serial ports /dev/ttyUSB* or /dev/ttyACM* detected on the target box).")
+         
+        target_port = None
+        # Smart Port Detection: check which port responds to tech_data command
+        for port in ports:
+            check_cmd = f"sg dialout -c 'cd ~/controlboard && timeout 5s ~/controlboard/env/bin/python3 -u dist/controlboard.py read tech_data -p {port}'"
+            stdin_check, stdout_check, stderr_check = ssh.exec_command(check_cmd)
+            await asyncio.to_thread(stdout_check.channel.recv_exit_status)
+            out = (await asyncio.to_thread(stdout_check.read)).decode()
+            if "Update Version:" in out:
+                target_port = port
+                break
+         
+        if not target_port:
+            # Default to /dev/ttyUSB2 if it exists, otherwise first candidate
+            usb2 = "/dev/ttyUSB2"
+            if usb2 in ports:
+                target_port = usb2
+            else:
+                target_port = ports[0]
+         
         channel = await asyncio.to_thread(ssh.invoke_shell)
-        await asyncio.to_thread(channel.send, f"sg dialout -c 'cd ~/controlboard && ~/controlboard/env/bin/python3 -u app.py'\n")
-        
-        await asyncio.sleep(2.0)
+         
+        # Run port scan inside the interactive shell so the user sees the output visually
+        cmd_seq = (
+            "cd ~/controlboard && "
+            "echo '=== SCANNING SERIAL PORTS ===' && "
+            "for port in /dev/ttyUSB* /dev/ttyACM*; do "
+            "  if [ -e \"$port\" ]; then "
+            "    echo \"Checking port: $port\" && "
+            "    sg dialout -c \"timeout 5s ~/controlboard/env/bin/python3 -u dist/controlboard.py read tech_data -p $port\" 2>&1; "
+            "  fi; "
+            "done && "
+            "echo '=== STARTING INTERACTIVE SHELL ===' && "
+            "sg dialout -c '~/controlboard/env/bin/python3 -u app.py'\n"
+        )
+        await asyncio.to_thread(channel.send, cmd_seq)
+         
+        await asyncio.sleep(4.0)
         await asyncio.to_thread(channel.send, f"{target_port}\n")
         await asyncio.sleep(1.0)
         await asyncio.to_thread(channel.send, "19200\n")
