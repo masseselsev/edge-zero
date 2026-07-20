@@ -4,11 +4,16 @@ export const translations: Record<Language, Record<string, string>> = {
   en: {
     tabDashboard: 'Dashboard',
     tabInventory: 'Fleet',
+    tabProfiles: 'Profiles',
     tabLibrary: 'Library',
     tabInitScripts: 'Init Scripts',
     tabLogs: 'Logs',
     tabSettings: 'Settings',
     tabEdgeBro: 'Edge B.R.O.',
+    profilesSub: 'Installation profiles and OS defaults',
+    profilesSubTabDefaults: 'Default Profile',
+    profilesDefaultTitle: 'Default Installation Settings',
+    profilesDefaultAccounts: 'Default Accounts',
     
     // Status
     systemStatus: 'System Status',
@@ -113,11 +118,16 @@ export const translations: Record<Language, Record<string, string>> = {
   uk: {
     tabDashboard: 'Панель приладів',
     tabInventory: 'Вузли (Fleet)',
+    tabProfiles: 'Профілі',
     tabLibrary: 'Бібліотека',
     tabInitScripts: 'Скрипти ініціалізації',
     tabLogs: 'Журнали',
     tabSettings: 'Налаштування',
     tabEdgeBro: 'Edge B.R.O.',
+    profilesSub: 'Профілі встановлення та налаштування ОС за замовчуванням',
+    profilesSubTabDefaults: 'Профіль за замовчуванням',
+    profilesDefaultTitle: 'Параметри встановлення за замовчуванням',
+    profilesDefaultAccounts: 'Облікові записи за замовчуванням',
     
     // Status
     systemStatus: 'Статус системи',
@@ -222,11 +232,16 @@ export const translations: Record<Language, Record<string, string>> = {
   ru: {
     tabDashboard: 'Панель',
     tabInventory: 'Узлы (Fleet)',
+    tabProfiles: 'Профили',
     tabLibrary: 'Библиотека',
     tabInitScripts: 'Скрипты инициализации',
     tabLogs: 'Журналы',
     tabSettings: 'Настройки',
     tabEdgeBro: 'Edge B.R.O.',
+    profilesSub: 'Профили установки и настройки ОС по умолчанию',
+    profilesSubTabDefaults: 'Профиль по умолчанию',
+    profilesDefaultTitle: 'Параметры установки по умолчанию',
+    profilesDefaultAccounts: 'Учётные записи по умолчанию',
     
     // Status
     systemStatus: 'Статус системы',

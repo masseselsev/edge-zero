@@ -8,6 +8,7 @@ import LibraryTab from './components/LibraryTab';
 import InitScriptsTab from './components/InitScriptsTab';
 import LogsTab from './components/LogsTab';
 import SettingsTab from './components/SettingsTab';
+import ProfilesTab from './components/ProfilesTab';
 import EdgeBroTab from './components/EdgeBroTab';
 import { Loader2 } from 'lucide-react';
 
@@ -92,6 +93,8 @@ export function AppContent() {
     switch (activeTab) {
       case 'inventory':
         return <InventoryTab />;
+      case 'profiles':
+        return <ProfilesTab />;
       case 'library':
         return <LibraryTab />;
       case 'scripts':

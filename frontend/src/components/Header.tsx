@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '../context/TranslationContext';
 import LanguageSelector from './LanguageSelector';
-import { Sun, Moon, User, ArrowDown, ArrowUp, LayoutDashboard, Server, Library, ScrollText, Terminal, Settings, Eye, Database } from 'lucide-react';
+import { Sun, Moon, User, ArrowDown, ArrowUp, LayoutDashboard, Server, Library, ScrollText, Terminal, Settings, Eye, Database, Sliders } from 'lucide-react';
 
 declare const __APP_VERSION__: string;
 
@@ -110,6 +110,7 @@ export default function Header({ activeTab, setActiveTab, currentUser, onLogout,
 
   const navItems = [
     { id: 'inventory', label: t('tabInventory'), icon: <Server size={14} /> },
+    { id: 'profiles', label: t('tabProfiles'), icon: <Sliders size={14} /> },
     { id: 'library', label: t('tabLibrary'), icon: <Library size={14} /> },
     { id: 'scripts', label: t('tabInitScripts'), icon: <ScrollText size={14} /> },
     { id: 'logs', label: t('tabLogs'), icon: <Terminal size={14} /> },
