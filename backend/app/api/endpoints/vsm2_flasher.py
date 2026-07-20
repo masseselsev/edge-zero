@@ -188,10 +188,10 @@ async def console_connect(payload: ConsoleConnectRequest, current_user: User = D
         ssh.exec_command(f"echo '{payload.password}' | sudo -S usermod -aG dialout {payload.username}")
         
         # Automatically detect correct serial port on target box
-        stdin, stdout, stderr = ssh.exec_command("ls -1 /dev/ttyUSB* /dev/ttyACM* 2>/dev/null")
+        stdin, stdout, stderr = ssh.exec_command("ls -1 /dev/ttyUSB* 2>/dev/null")
         ports = [line.strip() for line in stdout.read().decode().split('\n') if line.strip()]
         if not ports:
-            raise HTTPException(status_code=404, detail="VSM2 controller not found (no serial ports /dev/ttyUSB* or /dev/ttyACM* detected on the target box).")
+            raise HTTPException(status_code=404, detail="VSM2 controller not found (no serial ports /dev/ttyUSB* detected on the target box).")
         target_port = ports[0]
         
         channel = ssh.invoke_shell()
@@ -250,10 +250,10 @@ async def console_batch_read(payload: DumpRequest, current_user: User = Depends(
         ssh.connect(payload.ip, port=payload.ssh_port, username=payload.username, password=payload.password, timeout=10)
         
         # Automatically detect correct serial port on target box
-        stdin, stdout, stderr = ssh.exec_command("ls -1 /dev/ttyUSB* /dev/ttyACM* 2>/dev/null")
+        stdin, stdout, stderr = ssh.exec_command("ls -1 /dev/ttyUSB* 2>/dev/null")
         ports = [line.strip() for line in stdout.read().decode().split('\n') if line.strip()]
         if not ports:
-            raise HTTPException(status_code=404, detail="VSM2 controller not found (no serial ports /dev/ttyUSB* or /dev/ttyACM* detected on the target box).")
+            raise HTTPException(status_code=404, detail="VSM2 controller not found (no serial ports /dev/ttyUSB* detected on the target box).")
         target_port = ports[0]
         
         results = {}
