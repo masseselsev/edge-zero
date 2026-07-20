@@ -51,6 +51,10 @@ export const translations: Record<Language, Record<string, string>> = {
     taskLogs: 'Task Logs',
     debugLogs: 'System Debug Logs',
     auditLogs: 'Audit Logs',
+    systemLogsTitle: '>_ System & Security Logs',
+    systemLogsSub: 'Monitor real-time orchestrator daemon operations, user actions, and errors.',
+    searchLogsPlaceholder: 'Search logs...',
+    debugViewLabel: 'DEBUG VIEW',
     
     // Common
     save: 'Save',

@@ -220,6 +220,17 @@ async def update_settings(
     # Filter out plain-text passwords from db writes
     filtered_list = [item for item in settings_list if item.key not in ("DEFAULT_ROOT_PASSWORD", "DEFAULT_USER_PASSWORD")]
     
+    SENSITIVE_KEYS = {
+        "ORCHESTRATOR_SSH_PRIVATE_KEY",
+        "DEFAULT_ROOT_PASSWORD",
+        "DEFAULT_USER_PASSWORD",
+        "DEFAULT_ROOT_PASSWORD_HASH",
+        "DEFAULT_USER_PASSWORD_HASH",
+        "TELEGRAM_BOT_TOKEN",
+        "SECRET_KEY",
+        "EDGE_BRO_PASSWORD"
+    }
+
     for item in filtered_list:
         result = await db.execute(select(SystemSettings).where(SystemSettings.key == item.key))
         setting = result.scalars().first()
@@ -228,7 +239,11 @@ async def update_settings(
         else:
             new_setting = SystemSettings(key=item.key, value=item.value)
             db.add(new_setting)
-        updates.append(f"{item.key}={item.value}")
+        
+        if item.key in SENSITIVE_KEYS or "PASSWORD" in item.key or "PRIVATE_KEY" in item.key or "TOKEN" in item.key:
+            updates.append(f"{item.key}=[MASKED]")
+        else:
+            updates.append(f"{item.key}={item.value}")
     
     await db.commit()
     await log_user_action(db, current_user.username, "UPDATE_SETTINGS", f"Updated settings: {', '.join(updates)}", request)
