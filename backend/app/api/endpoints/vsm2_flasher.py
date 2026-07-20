@@ -42,7 +42,7 @@ class DumpRequest(BaseModel):
     ssh_port: int = 2222
     username: str
     password: str
-    serial_port: str
+    serial_port: str = ""
     params: List[str]
 
 async def get_system_setting(key: str, default: str = "") -> str:
@@ -187,7 +187,11 @@ async def console_connect(payload: ConsoleConnectRequest, current_user: User = D
         ssh.exec_command("cd ~/controlboard && python3 -m venv env && ./env/bin/pip install pyserial requests")
         ssh.exec_command(f"echo '{payload.password}' | sudo -S usermod -aG dialout {payload.username}")
         
-        target_port = payload.port or "/dev/ttyUSB0"
+        # Automatically detect correct serial port on target box
+        stdin, stdout, stderr = ssh.exec_command("ls -1 /dev/ttyUSB* /dev/ttyACM* 2>/dev/null")
+        ports = [line.strip() for line in stdout.read().decode().split('\n') if line.strip()]
+        target_port = ports[0] if ports else "/dev/ttyUSB0"
+        
         channel = ssh.invoke_shell()
         channel.send(f"sg dialout -c 'cd ~/controlboard && ~/controlboard/env/bin/python3 -u app.py'\n")
         
@@ -240,9 +244,15 @@ async def console_batch_read(payload: DumpRequest, current_user: User = Depends(
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     try:
         ssh.connect(payload.ip, port=payload.ssh_port, username=payload.username, password=payload.password, timeout=10)
+        
+        # Automatically detect correct serial port on target box
+        stdin, stdout, stderr = ssh.exec_command("ls -1 /dev/ttyUSB* /dev/ttyACM* 2>/dev/null")
+        ports = [line.strip() for line in stdout.read().decode().split('\n') if line.strip()]
+        target_port = ports[0] if ports else "/dev/ttyUSB0"
+        
         results = {}
         for p in payload.params:
-            cmd = f"sg dialout -c 'cd ~/controlboard && ~/controlboard/env/bin/python3 -u dist/controlboard.py read {p} -p {payload.serial_port}'"
+            cmd = f"sg dialout -c 'cd ~/controlboard && ~/controlboard/env/bin/python3 -u dist/controlboard.py read {p} -p {target_port}'"
             stdin, stdout, stderr = ssh.exec_command(cmd)
             out = clean_ansi(stdout.read().decode())
             err = clean_ansi(stderr.read().decode())

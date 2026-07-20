@@ -31,8 +31,6 @@ export default function Vsm2FlasherTab() {
   
   // Console state
   const [targetConsoleIp, setTargetConsoleIp] = useState('');
-  const [consolePort, setConsolePort] = useState('/dev/ttyUSB0');
-  const [consolePortsList, setConsolePortsList] = useState<string[]>([]);
   const [consoleCommands, setConsoleCommands] = useState<CommandItem[]>([]);
   const [consoleConnected, setConsoleConnected] = useState(false);
   const [consoleBanner, setConsoleBanner] = useState('');
@@ -58,7 +56,6 @@ export default function Vsm2FlasherTab() {
 
   useEffect(() => {
     fetchRepoStatus();
-    fetchConsolePorts();
     fetchConsoleCommands();
     detectHostIps();
     
@@ -90,12 +87,6 @@ export default function Vsm2FlasherTab() {
     } catch (err) { console.error(err); }
   };
 
-  const fetchConsolePorts = async () => {
-    try {
-      const res = await fetch('/api/vsm2-flasher/console/ports');
-      if (res.ok) setConsolePortsList(await res.json());
-    } catch (err) { console.error(err); }
-  };
 
   const fetchConsoleCommands = async () => {
     try {
@@ -138,7 +129,7 @@ export default function Vsm2FlasherTab() {
       const res = await fetch('/api/vsm2-flasher/console/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ip: targetConsoleIp, ssh_port: sshPort, username: sshUser, password: sshPass, port: consolePort })
+        body: JSON.stringify({ ip: targetConsoleIp, ssh_port: sshPort, username: sshUser, password: sshPass })
       });
       if (res.ok) {
         const data = await res.json();
@@ -192,7 +183,7 @@ export default function Vsm2FlasherTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ip: targetConsoleIp, ssh_port: sshPort, username: sshUser, password: sshPass,
-          serial_port: consolePort, params: selectedParams
+          params: selectedParams
         })
       });
       if (res.ok) {
@@ -307,9 +298,6 @@ export default function Vsm2FlasherTab() {
               <div className="flex flex-wrap items-center gap-3 bg-zinc-950 p-3 rounded-xl border border-zinc-850">
                 <input type="text" value={targetConsoleIp} onChange={(e) => setTargetConsoleIp(e.target.value)} className="bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none max-w-[150px] font-semibold" placeholder="Target Box IP" />
                 
-                <select value={consolePort} onChange={(e) => setConsolePort(e.target.value)} className="bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none cursor-pointer">
-                  {consolePortsList.map(p => <option key={p} value={p.split(' ')[0]}>{p}</option>)}
-                </select>
                 
                 {!consoleConnected ? (
                   <button onClick={handleConsoleConnect} disabled={connecting || !targetConsoleIp} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold disabled:opacity-40 transition-all cursor-pointer">
