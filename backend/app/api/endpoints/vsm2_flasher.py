@@ -45,7 +45,7 @@ class FlashRequest(BaseModel):
     username: str
     password: str
     port: int = 2222
-    advertised_ip: str
+    advertised_ip: str = ""
 
 class ConsoleConnectRequest(BaseModel):
     ip: str

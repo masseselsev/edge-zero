@@ -112,14 +112,23 @@ class FlashWorker(threading.Thread):
             client.connect(self.ip, port=self.port, username=self.username, password=self.password, timeout=5)
             self.log("Connected. Starting flash process...")
             
-            base_url_env = f'export BASE_URL="http://{self.advertised_ip}:7000/api/vsm2-flasher"; ' if self.advertised_ip else ""
+            adv_ip = self.advertised_ip
+            if not adv_ip:
+                try:
+                    transport = client.get_transport()
+                    if transport and transport.sock:
+                        adv_ip = transport.sock.getsockname()[0]
+                        self.log(f"Auto-detected flasher server IP: {adv_ip}")
+                except Exception as e:
+                    self.log(f"Warning: Failed to auto-detect source IP: {e}")
+            if not adv_ip:
+                adv_ip = "192.168.222.2"
+            
+            base_url_env = f'export BASE_URL="http://{adv_ip}:7000/api/vsm2-flasher"; '
             env_vars = f'export TELEGRAM_BOT_TOKEN="{self.tg_token}"; export TELEGRAM_CHAT_ID="{self.tg_chat_id}"; export TERM=xterm-256color; {base_url_env}'
             
-            if base_url_env:
-                setup_url = f"http://{self.advertised_ip}:7000/api/vsm2-flasher/files/controlboard/setup.sh"
-                cmd = env_vars + f'mkdir -p ~/controlboard; if wget --timeout=5 -t 1 -q -O ~/controlboard/setup.sh "{setup_url}"; then chmod +x ~/controlboard/setup.sh; ~/controlboard/setup.sh "{setup_url}" --flash-cleanup; else echo "Error: Failed to download setup.sh from {setup_url}"; exit 1; fi'
-            else:
-                cmd = env_vars + 'mkdir -p ~/controlboard; url="https://raw.githubusercontent.com/masseselsev/controlboard/main/controlboard/setup.sh"; if wget --timeout=5 -t 1 -q -O ~/controlboard/setup.sh "$url"; then chmod +x ~/controlboard/setup.sh; ~/controlboard/setup.sh "$url" --flash-cleanup; else echo "Error: Failed to download setup.sh"; exit 1; fi'
+            setup_url = f"http://{adv_ip}:7000/api/vsm2-flasher/files/controlboard/setup.sh"
+            cmd = env_vars + f'mkdir -p ~/controlboard; if wget --timeout=5 -t 1 -q -O ~/controlboard/setup.sh "{setup_url}"; then chmod +x ~/controlboard/setup.sh; ~/controlboard/setup.sh "{setup_url}" --flash-cleanup; else echo "Error: Failed to download setup.sh from {setup_url}"; exit 1; fi'
             
             stdin, stdout, stderr = client.exec_command(cmd, get_pty=True)
             channel = stdout.channel

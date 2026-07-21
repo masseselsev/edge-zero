@@ -295,8 +295,8 @@ export default function Vsm2FlasherTab() {
                 <input type="number" value={sshPort} onChange={(e) => setSshPort(parseInt(e.target.value) || 22)} required className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none focus:border-indigo-500 transition-colors font-mono" />
               </div>
               <div>
-                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Flasher Server IP</label>
-                <input type="text" value={advertisedIp} onChange={(e) => setAdvertisedIp(e.target.value)} required className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none focus:border-indigo-500 transition-colors font-mono" />
+                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Flasher Server IP (Optional)</label>
+                <input type="text" value={advertisedIp} onChange={(e) => setAdvertisedIp(e.target.value)} placeholder="Auto-detects from SSH" className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none focus:border-indigo-500 transition-colors font-mono" />
               </div>
             </div>
 
