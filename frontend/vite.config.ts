@@ -21,7 +21,7 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://overwatch-core:7000',
+        target: 'http://edge-zero-core:7000',
         changeOrigin: true,
         secure: false
       }

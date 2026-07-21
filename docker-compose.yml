@@ -1,48 +1,48 @@
 services:
-  overwatch-db:
+  db:
     image: postgres:16-alpine
-    container_name: overwatch-db
+    container_name: edge-zero-db
     environment:
-      POSTGRES_USER: overwatch
-      POSTGRES_PASSWORD: overwatch_password
-      POSTGRES_DB: overwatch
+      POSTGRES_USER: edge_zero
+      POSTGRES_PASSWORD: edge_zero_password
+      POSTGRES_DB: edge_zero
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - overwatch-net
+      - edge-zero-net
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U overwatch" ]
+      test: [ "CMD-SHELL", "pg_isready -U edge_zero" ]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  overwatch-core:
+  core:
     build:
       context: .
       dockerfile: docker/core.Dockerfile
-    container_name: overwatch-core
+    container_name: edge-zero-core
     depends_on:
-      overwatch-db:
+      db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql+asyncpg://overwatch:overwatch_password@overwatch-db:5432/overwatch
+      DATABASE_URL: postgresql+asyncpg://edge_zero:edge_zero_password@db:5432/edge_zero
       API_HOST: 192.168.222.2
       API_PORT: 7000
     volumes:
       - ./backend:/app
       - infra_config:/mnt/infra_config
     networks:
-      - overwatch-net
+      - edge-zero-net
     ports:
       - "7000:7000"
       - "5140:5140/udp"   # Debian installer syslog forwarding
     command: [ "/app/entrypoint.sh" ]
 
-  overwatch-infra:
+  infra:
     build:
       context: .
       dockerfile: docker/infra/Dockerfile
-    container_name: overwatch-infra
+    container_name: edge-zero-infra
     cap_add:
       - NET_ADMIN
     network_mode: host
@@ -52,7 +52,7 @@ services:
       # Standard Docker DHCP usually requires host networking OR a DHCP relay.
       # Given "Industrial Bare-Metal Provisioning", host networking is safest for PXE.
       # However, the user prompt says "4 services sharing a network" implying a docker network.
-      # But `overwatch-infra` needs to answer external DHCP requests.
+      # But `edge-zero-infra` needs to answer external DHCP requests.
       # I'll stick to a bridge network for internal comms, but exposing ports might not be enough for DHCP (broadcasts).
       # Wait, "infra service must have CAP_ADD: NET_ADMIN". This implies we might try to run it isolated?
       # Let's use host networking for infra to be safe for DHCP/PXE, OR bind ports 67/69udp.
@@ -61,11 +61,11 @@ services:
       - infra_config:/mnt/infra_config
       - ./docker/infra/dnsmasq.conf:/etc/dnsmasq.conf:ro
     depends_on:
-      - overwatch-core
+      - core
 
-  overwatch-web:
+  web:
     image: node:20-alpine # Placeholder for dev, or build stage
-    container_name: overwatch-web
+    container_name: edge-zero-web
     working_dir: /app
     volumes:
       - ./frontend:/app
@@ -73,12 +73,12 @@ services:
     ports:
       - "5555:5555"
     networks:
-      - overwatch-net
+      - edge-zero-net
 
 volumes:
   postgres_data:
   infra_config:
 
 networks:
-  overwatch-net:
+  edge-zero-net:
     driver: bridge

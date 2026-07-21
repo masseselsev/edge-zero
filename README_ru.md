@@ -120,7 +120,7 @@
 
 Для принудительного сброса пароля суперадминистратора:
 ```bash
-docker compose exec overwatch-core python /app/create_admin.py
+docker compose exec edge-zero-core python /app/create_admin.py
 ```
 
 ---

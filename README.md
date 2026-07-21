@@ -120,7 +120,7 @@ On initial fresh database creation:
 
 To reset the superadmin password:
 ```bash
-docker compose exec overwatch-core python /app/create_admin.py
+docker compose exec edge-zero-core python /app/create_admin.py
 ```
 
 ---

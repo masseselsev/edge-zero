@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Edge-Z.E.R.O."
-    DATABASE_URL: str = "postgresql+asyncpg://overwatch:overwatch_password@overwatch-db:5432/overwatch"
+    DATABASE_URL: str = "postgresql+asyncpg://edge_zero:edge_zero_password@edge-zero-db:5432/edge_zero"
     
     SECRET_KEY: str = "super-secret-key-for-dev"
     ALGORITHM: str = "HS256"

@@ -2,7 +2,7 @@
 set -e
 
 # Wait for DB
-until pg_isready -h overwatch-db -U overwatch; do
+until pg_isready -h edge-zero-db -U edge_zero; do
   echo "Waiting for database..."
   sleep 2
 done
