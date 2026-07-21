@@ -59,6 +59,7 @@ function getProgressType(line: string): string | null {
 
 export default function Vsm2FlasherTab() {
   const { t } = useTranslation();
+  const logsEndRef = useRef<HTMLDivElement | null>(null);
   const [subTab, setSubTab] = useState<'console' | 'logs'>('console');
   const [ips, setIps] = useState('');
   const [sshUser, setSshUser] = useState('user');
@@ -93,6 +94,12 @@ export default function Vsm2FlasherTab() {
   const [liveLogs, setLiveLogs] = useState<string[]>([]);
 
   useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollTop = logsEndRef.current.scrollHeight;
+    }
+  }, [liveLogs]);
+
+  useEffect(() => {
     fetchRepoStatus();
     fetchConsoleCommands();
     detectHostIps();
@@ -102,15 +109,12 @@ export default function Vsm2FlasherTab() {
     sse.onmessage = (e) => {
       const newLine = e.data;
       setLiveLogs(prev => {
-        if (prev.length === 0) return [newLine];
         const newType = getProgressType(newLine);
-        const lastLine = prev[prev.length - 1];
-        const lastType = getProgressType(lastLine);
-        if (newType && lastType && newType === lastType) {
-          return [...prev.slice(0, -1), newLine];
-        } else {
-          return [...prev, newLine].slice(-500);
+        if (newType) {
+          const filtered = prev.filter(line => getProgressType(line) !== newType);
+          return [...filtered, newLine].slice(-500);
         }
+        return [...prev, newLine].slice(-500);
       });
     };
     return () => sse.close();
@@ -480,7 +484,7 @@ export default function Vsm2FlasherTab() {
                   <Trash2 size={13} /> Clear Logs
                 </button>
               </div>
-              <div className="flex-1 bg-black border border-zinc-850 p-4 rounded-xl font-mono text-xs overflow-y-auto max-h-[380px] min-h-[300px] whitespace-pre-wrap text-zinc-300 select-text scrollbar-thin">
+              <div ref={logsEndRef} className="flex-1 bg-black border border-zinc-850 p-4 rounded-xl font-mono text-xs overflow-y-auto max-h-[380px] min-h-[300px] whitespace-pre-wrap text-zinc-300 select-text scrollbar-thin">
                 {liveLogs.length === 0 ? (
                   <p className="text-zinc-650 italic text-center py-12 font-sans">No live flashing operations logs received. Spawning a flasher thread will display output here.</p>
                 ) : (
