@@ -125,7 +125,7 @@ async def generate_box_pxe_config(box: Box):
 DEFAULT install
 LABEL install
     KERNEL {kernel}
-    APPEND initrd={initrd} auto=true priority=critical cdrom-detect/enable=false anna/choose_modules=netboot-retriever console=tty0 vga=788 preseed/url={preseed_url} netcfg/choose_interface=auto
+    APPEND initrd={initrd} auto=true priority=critical preseed/url={preseed_url} netcfg/choose_interface=auto
 """
     else:
         # Boot from local disk
@@ -162,7 +162,7 @@ LABEL local
         
         grub_content = f"""
 menuentry 'Install OS' {{
-    linux {kernel} initrd={initrd} auto=true priority=critical cdrom-detect/enable=false anna/choose_modules=netboot-retriever console=tty0 vga=788 preseed/url={preseed_url} netcfg/choose_interface=auto
+    linux {kernel} initrd={initrd} auto=true priority=critical preseed/url={preseed_url} netcfg/choose_interface=auto
     initrd {initrd}
 }}
 """
