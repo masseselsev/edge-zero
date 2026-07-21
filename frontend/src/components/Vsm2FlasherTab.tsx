@@ -320,7 +320,15 @@ export default function Vsm2FlasherTab() {
                 )}
               </div>
 
-              {consoleConnected ? (
+              {connecting ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center p-12 border border-zinc-800 rounded-xl mt-2 bg-black/40">
+                  <RefreshCw className="animate-spin text-indigo-500 mb-3" size={32} />
+                  <h4 className="text-zinc-200 font-bold text-sm">Establishing Connection</h4>
+                  <p className="text-zinc-500 text-xs mt-1 max-w-sm">
+                    Connecting to the box, verifying Python environment, and scanning serial ports for active controllers...
+                  </p>
+                </div>
+              ) : consoleConnected ? (
                 <div className="flex-1 flex flex-col mt-2 space-y-3">
                   <div className="flex-1 p-4 border border-zinc-800 rounded-xl bg-black font-mono text-xs overflow-y-auto max-h-[300px] min-h-[250px] space-y-1.5 scrollbar-thin select-text">
                     {consoleOutput.map((l, i) => (

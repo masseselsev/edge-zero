@@ -20,6 +20,24 @@ from app.services.vsm2_worker import FlashWorker, LOG_QUEUE, LOG_HISTORY, SUBSCR
 router = APIRouter()
 CONSOLE_SESSIONS = {}  # username -> (ssh, channel)
 
+def clean_console_greeting(text: str) -> str:
+    lines = text.split('\n')
+    cleaned_lines = []
+    skip_keywords = [
+        "last login:", 
+        "cd ~/controlboard", 
+        "user@", 
+        "введите com-порт", 
+        "введите baudrate", 
+        "--- интерактивный терминал"
+    ]
+    for line in lines:
+        line_lower = line.lower()
+        if any(kw in line_lower for kw in skip_keywords):
+            continue
+        cleaned_lines.append(line)
+    return '\n'.join(cleaned_lines).strip()
+
 class FlashRequest(BaseModel):
     ips: str
     username: str
@@ -275,10 +293,9 @@ async def console_connect(payload: ConsoleConnectRequest, current_user: User = D
             raise HTTPException(status_code=404, detail="VSM2 controller not found (no serial ports /dev/ttyUSB* or /dev/ttyACM* detected on the target box).")
          
         target_port = None
-        scan_logs = ["=== SCANNING SERIAL PORTS ==="]
+        target_version = None
         # Smart Port Detection: check which port responds to tech_data command
         for port in ports:
-            scan_logs.append(f"Checking port: {port}")
             check_cmd = f"sg dialout -c 'cd ~/controlboard && timeout 3s ~/controlboard/env/bin/python3 -u dist/controlboard.py read tech_data -p {port}'"
             stdin_check, stdout_check, stderr_check = ssh.exec_command(check_cmd)
             await asyncio.to_thread(stdout_check.channel.recv_exit_status)
@@ -286,13 +303,9 @@ async def console_connect(payload: ConsoleConnectRequest, current_user: User = D
             if "Update Version:" in out:
                 import re
                 m = re.search(r"Update Version:\s*(\S+)", out)
-                ver = m.group(1) if m else "unknown"
-                scan_logs.append(f"  [OK] Found controller (Version: {ver})")
+                target_version = m.group(1) if m else "unknown"
                 target_port = port
-            else:
-                err_lines = [line.strip() for line in out.split('\n') if any(w in line.lower() for w in ["error", "exception", "busy", "failed"])]
-                err = err_lines[0] if err_lines else "No response"
-                scan_logs.append(f"  [FAIL] {err}")
+                break
           
         if not target_port:
             # Default to /dev/ttyUSB2 if it exists, otherwise first candidate
@@ -301,6 +314,9 @@ async def console_connect(payload: ConsoleConnectRequest, current_user: User = D
                 target_port = usb2
             else:
                 target_port = ports[0]
+            scan_logs = [f"Controller not detected. Defaulting to {target_port}"]
+        else:
+            scan_logs = [f"Connected to VSM2 controller on {target_port} (Version: {target_version})"]
           
         channel = await asyncio.to_thread(ssh.invoke_shell)
           
@@ -318,7 +334,8 @@ async def console_connect(payload: ConsoleConnectRequest, current_user: User = D
         out = ""
         if channel.recv_ready():
             out = channel.recv(4096).decode('utf-8', errors='ignore')
-            return {"status": "connected", "banner": clean_ansi(out), "scan_logs": scan_logs}
+            cleaned_banner = clean_console_greeting(clean_ansi(out))
+            return {"status": "connected", "banner": cleaned_banner or "Console connection established", "scan_logs": scan_logs}
         return {"status": "connected", "banner": "Console connection established", "scan_logs": scan_logs}
     except HTTPException:
         raise
