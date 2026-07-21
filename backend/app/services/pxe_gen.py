@@ -107,22 +107,25 @@ async def generate_box_pxe_config(box: Box):
         # PXE Boot for Installation
         preseed_url = f"http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{box.mac_address}/preseed.cfg"
         
-        # Default kernel/initrd
-        kernel = "debian-installer/linux"
-        initrd = "debian-installer/initrd.gz"
-        
-        # If box has a specific OS image, use it
+        image_dir = "debian-installer"
         if box.os_image:
-            # We assume extracted ISO contents are in tftp/images/{filename_without_ext}/
             image_dir = box.os_image.filename.replace(".iso", "").replace(".ISO", "")
-            kernel = f"images/{image_dir}/vmlinuz"
-            initrd = f"images/{image_dir}/initrd.gz"
+        
+        base_img_path = os.path.join(TFTP_ROOT, "images")
+        img_path = os.path.join(base_img_path, image_dir)
+        if not os.path.exists(img_path) and os.path.exists(base_img_path):
+            available_dirs = [d for d in os.listdir(base_img_path) if os.path.isdir(os.path.join(base_img_path, d))]
+            if available_dirs:
+                image_dir = available_dirs[0]
+
+        kernel = f"images/{image_dir}/vmlinuz"
+        initrd = f"images/{image_dir}/initrd.gz"
 
         config_content = f"""
 DEFAULT install
 LABEL install
     KERNEL {kernel}
-    APPEND initrd={initrd} auto=true priority=critical url={preseed_url} interface=auto
+    APPEND initrd={initrd} auto=true priority=critical cdrom-detect/enable=false anna/choose_modules=netboot-retriever console=tty0 vga=788 preseed/url={preseed_url} netcfg/choose_interface=auto
 """
     else:
         # Boot from local disk
@@ -142,13 +145,24 @@ LABEL local
     grub_content = ""
     if box.status == BoxStatus.INSTALLING:
         preseed_url = f"http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{box.mac_address}/preseed.cfg"
-        image_dir = box.os_image.filename.replace(".iso", "").replace(".ISO", "") if box.os_image else "debian-installer"
+        
+        image_dir = "debian-installer"
+        if box.os_image:
+            image_dir = box.os_image.filename.replace(".iso", "").replace(".ISO", "")
+        
+        base_img_path = os.path.join(TFTP_ROOT, "images")
+        img_path = os.path.join(base_img_path, image_dir)
+        if not os.path.exists(img_path) and os.path.exists(base_img_path):
+            available_dirs = [d for d in os.listdir(base_img_path) if os.path.isdir(os.path.join(base_img_path, d))]
+            if available_dirs:
+                image_dir = available_dirs[0]
+
         kernel = f"/images/{image_dir}/vmlinuz"
         initrd = f"/images/{image_dir}/initrd.gz"
         
         grub_content = f"""
 menuentry 'Install OS' {{
-    linux {kernel} initrd={initrd} auto=true priority=critical url={preseed_url} interface=auto
+    linux {kernel} initrd={initrd} auto=true priority=critical cdrom-detect/enable=false anna/choose_modules=netboot-retriever console=tty0 vga=788 preseed/url={preseed_url} netcfg/choose_interface=auto
     initrd {initrd}
 }}
 """
