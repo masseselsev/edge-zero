@@ -1,3 +1,5 @@
+d-i cdrom-detect/enable boolean false
+
 # Localization
 d-i debian-installer/locale string {{ locale | default('en_US.UTF-8') }}
 d-i keyboard-configuration/xkb-keymap select {{ keyboard | default('us') }}
