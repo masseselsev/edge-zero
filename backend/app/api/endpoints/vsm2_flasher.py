@@ -253,7 +253,7 @@ async def console_connect(payload: ConsoleConnectRequest, current_user: User = D
             "    echo 'ERROR: No Python interpreter with working venv/ensurepip found.' >&2; "
             "    exit 1; "
             "  fi; "
-            "  \"$FOUND_PYTHON\" -m venv env && "
+            "  rm -rf env && \"$FOUND_PYTHON\" -m venv env && "
             "  (./env/bin/pip install --no-index --find-links wheels/ pyserial requests || "
             "   ./env/bin/pip install --timeout 3 --retries 1 pyserial requests); "
             "fi"
