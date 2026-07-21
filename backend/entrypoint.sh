@@ -7,8 +7,9 @@ until pg_isready -h edge-zero-db -U edge_zero; do
   sleep 2
 done
 
-# Ensure TFTP directory structure exists
+# Ensure required static directories exist
 mkdir -p /mnt/infra_config/tftp/images
+mkdir -p /mnt/infra_config/isos
 
 # Run migrations
 alembic upgrade head
