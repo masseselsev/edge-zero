@@ -9,7 +9,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - edge-zero-net
+      - net
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U edge_zero" ]
       interval: 5s
@@ -32,7 +32,7 @@ services:
       - ./backend:/app
       - infra_config:/mnt/infra_config
     networks:
-      - edge-zero-net
+      - net
     ports:
       - "7000:7000"
       - "5140:5140/udp"   # Debian installer syslog forwarding
@@ -73,12 +73,12 @@ services:
     ports:
       - "5555:5555"
     networks:
-      - edge-zero-net
+      - net
 
 volumes:
   postgres_data:
   infra_config:
 
 networks:
-  edge-zero-net:
+  net:
     driver: bridge
