@@ -79,3 +79,6 @@ d-i preseed/late_command string \
     in-target /bin/sh -c "/tmp/init.sh >> /tmp/init.log 2>&1"; \
     in-target /bin/sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Debian] init.sh complete — sending final callback\",\"progress\":95}' || true"; \
     in-target /bin/sh -c "wget -qO- http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/callback";
+
+# Finishing the installation — automatic reboot without prompting
+d-i finish-install/reboot_in_progress note
