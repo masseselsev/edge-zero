@@ -56,8 +56,9 @@ async def provision_report(
     HTTP reporting format {event_type, name, description, result}.
     """
     from sqlalchemy import cast as sa_cast
+    mac_clean = mac.replace("-", ":").upper()
     result = await db.execute(
-        select(Box).where(Box.mac_address == sa_cast(mac, MACADDR))
+        select(Box).where(Box.mac_address == sa_cast(mac_clean, MACADDR))
     )
     box = result.scalars().first()
     if not box:
@@ -115,11 +116,11 @@ async def get_system_setting(db: AsyncSession, key: str, default: str) -> str:
 
 @router.get("/{mac}/preseed.cfg")
 async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get_db)):
-    # Query Box (cast input string to MACADDR)
+    mac_clean = mac.replace("-", ":").upper()
     result = await db.execute(
         select(Box)
         .options(joinedload(Box.location))
-        .where(Box.mac_address == cast(mac, MACADDR))
+        .where(Box.mac_address == cast(mac_clean, MACADDR))
     )
     box = result.scalars().first()
     
@@ -188,11 +189,11 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
 
 @router.get("/{mac}/user-data")
 async def get_user_data(mac: str, request: Request, db: AsyncSession = Depends(get_db)):
-    # Same logic as preseed but for Ubuntu
+    mac_clean = mac.replace("-", ":").upper()
     result = await db.execute(
         select(Box)
         .options(joinedload(Box.location))
-        .where(Box.mac_address == cast(mac, MACADDR))
+        .where(Box.mac_address == cast(mac_clean, MACADDR))
     )
     box = result.scalars().first()
     if not box:
@@ -329,7 +330,8 @@ async def report_hardware_inventory(
     from app.models.box import BoxStatus
     from app.services.telegram import send_telegram_message
     
-    result = await db.execute(select(Box).where(Box.mac_address == cast(mac, MACADDR)))
+    mac_clean = mac.replace("-", ":").upper()
+    result = await db.execute(select(Box).where(Box.mac_address == cast(mac_clean, MACADDR)))
     box = result.scalars().first()
     if not box:
         raise HTTPException(status_code=404, detail="Box not found")
@@ -417,7 +419,8 @@ from app.models.user import User
 
 @router.get("/{mac}/callback")
 async def provision_callback(mac: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Box).where(Box.mac_address == cast(mac, MACADDR)))
+    mac_clean = mac.replace("-", ":").upper()
+    result = await db.execute(select(Box).where(Box.mac_address == cast(mac_clean, MACADDR)))
     box = result.scalars().first()
     
     if box:

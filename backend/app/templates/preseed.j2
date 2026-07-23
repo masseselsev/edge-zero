@@ -77,11 +77,12 @@ d-i preseed/late_command string \
     in-target chmod 600 /etc/openvpn/client.key; \
     in-target /bin/sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Debian] VPN credentials written\",\"progress\":70}' || true"; \
     in-target /bin/sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Debian] Downloading init.sh...\",\"progress\":80}' || true"; \
-    in-target /bin/sh -c "wget -qO /tmp/init.sh http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/init.sh && chmod +x /tmp/init.sh"; \
+    in-target /bin/sh -c "wget -qO /tmp/init.sh http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/init.sh || true"; \
+    in-target /bin/sh -c "chmod +x /tmp/init.sh || true"; \
     in-target /bin/sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Debian] Running init.sh...\",\"progress\":85}' || true"; \
-    in-target /bin/sh -c "/tmp/init.sh >> /tmp/init.log 2>&1"; \
+    in-target /bin/sh -c "/tmp/init.sh >> /tmp/init.log 2>&1 || true"; \
     in-target /bin/sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Debian] init.sh complete — sending final callback\",\"progress\":95}' || true"; \
-    in-target /bin/sh -c "wget -qO- http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/callback";
+    in-target /bin/sh -c "wget -qO- http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/callback || true";
 
 # Finishing the installation — automatic reboot without prompting
 d-i finish-install/reboot_in_progress note
