@@ -117,7 +117,7 @@ async def sync_pxe_config(db: AsyncSession = Depends(get_db)):
 
 from sqlalchemy import select, cast
 from sqlalchemy.dialects.postgresql import MACADDR
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 async def get_system_setting(db: AsyncSession, key: str, default: str) -> str:
     res = await db.execute(select(SystemSettings).where(SystemSettings.key == key))
@@ -129,7 +129,7 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
     mac_clean = clean_mac(mac)
     result = await db.execute(
         select(Box)
-        .options(joinedload(Box.location))
+        .options(joinedload(Box.location), selectinload(Box.os_image))
         .where(Box.mac_address == cast(mac_clean, MACADDR))
     )
     box = result.scalars().first()
