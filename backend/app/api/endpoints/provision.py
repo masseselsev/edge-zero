@@ -538,7 +538,7 @@ boot
             "echo =============================================================",
             f"echo REGISTERED DEVICE: {box.internal_sn} ({mac.upper()})",
             f"echo Status: {box.status.value}",
-            "echo Waiting for 'Start Provisioning' command from dashboard...",
+            "echo Waiting for 'Install' command from dashboard...",
             "echo =============================================================",
             "sleep 10",
             f"chain http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{mac}/boot.ipxe"
