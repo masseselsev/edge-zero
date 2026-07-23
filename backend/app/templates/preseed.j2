@@ -2,9 +2,10 @@ d-i cdrom-detect/enable boolean false
 d-i debconf/frontend string text
 d-i debian-installer/frontend string text
 
-{% if iso_preseed_url %}
-# Include embedded preseed configuration extracted from ISO image
-d-i preseed/include string {{ iso_preseed_url }}
+{% if iso_preseed_content %}
+# --- Embedded ISO Preseed Configuration ---
+{{ iso_preseed_content }}
+# --- End Embedded ISO Preseed Configuration ---
 {% endif %}
 
 # Localization

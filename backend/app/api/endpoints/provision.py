@@ -172,9 +172,15 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
             if available:
                 image_dir_name = available[0]
 
+    iso_preseed_content = ""
     iso_preseed_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "iso_preseed.cfg")
     if os.path.exists(iso_preseed_path):
         iso_preseed_url = f"http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{mac}/iso_preseed.cfg"
+        try:
+            with open(iso_preseed_path, "r", errors="replace") as pf:
+                iso_preseed_content = pf.read().strip()
+        except Exception:
+            pass
 
     pkg_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "iso_packages.txt")
     if os.path.exists(pkg_path):
@@ -204,6 +210,7 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
         "mirror_host": loc.package_mirror if loc and loc.package_mirror else default_mirror,
         "mirror_proxy": default_mirror_proxy,
         "iso_preseed_url": iso_preseed_url,
+        "iso_preseed_content": iso_preseed_content,
         "iso_packages": iso_packages,
         "has_simple_cdd": has_simple_cdd,
         "image_dir_name": image_dir_name,
