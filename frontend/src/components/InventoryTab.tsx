@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from '../context/TranslationContext';
-import { Search, Plus, Trash2, Server, PlayCircle, AlertTriangle } from 'lucide-react';
+import { Search, Plus, Trash2, Server, PlayCircle, AlertTriangle, Terminal } from 'lucide-react';
 import ConsoleDrawer from './ConsoleDrawer';
 import BoxDetailsModal from './BoxDetailsModal';
 
@@ -364,6 +364,13 @@ export default function InventoryTab() {
                         <span>Install</span>
                       </button>
                     )}
+                    <button
+                      onClick={() => setConsoleBox({ id: box.id, sn: box.internal_sn, status: box.status, progress: box.installation_progress })}
+                      className="p-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded transition-all cursor-pointer flex items-center gap-1"
+                      title="Open Live Console / Logs"
+                    >
+                      <Terminal size={14} />
+                    </button>
                     <button
                       onClick={() => handleDeleteBox(box.id)}
                       className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded transition-all cursor-pointer"

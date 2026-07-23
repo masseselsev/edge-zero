@@ -1,4 +1,5 @@
 d-i cdrom-detect/enable boolean false
+d-i debian-installer/frontend string text
 
 # Localization
 d-i debian-installer/locale string {{ locale | default('en_US.UTF-8') }}
