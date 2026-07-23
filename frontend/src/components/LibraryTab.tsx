@@ -86,7 +86,7 @@ export default function LibraryTab({ initialSubTab = 'images' }: LibraryTabProps
 
     const formData = new FormData();
     formData.append('file', uploadFile);
-    formData.append('os_type', osType);
+    formData.append('os_type', 'DEBIAN');
     formData.append('is_active', String(isActive));
 
     const xhr = new XMLHttpRequest();
@@ -290,18 +290,6 @@ export default function LibraryTab({ initialSubTab = 'images' }: LibraryTabProps
                   onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
                   className="w-full text-xs bg-zinc-950 border border-zinc-800 p-2.5 rounded-lg text-zinc-400 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-[11px] file:font-bold file:bg-zinc-900 file:text-zinc-300 file:hover:bg-zinc-800 cursor-pointer"
                 />
-              </div>
-
-              <div>
-                <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">OS Type</label>
-                <select
-                  value={osType}
-                  onChange={(e) => setOsType(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg outline-none cursor-pointer"
-                >
-                  <option value="DEBIAN">Debian</option>
-                  <option value="UBUNTU">Ubuntu</option>
-                </select>
               </div>
 
               {uploading && uploadProgress !== null && (

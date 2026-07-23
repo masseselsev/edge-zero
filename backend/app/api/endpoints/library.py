@@ -140,16 +140,37 @@ async def _extract_iso_assets(iso_path: str, image_id: UUID, filename: str):
                     out_pf.write(combined_content)
                 print(f"Extracted embedded ISO preseed config to {image_dir_name}/iso_preseed.cfg")
 
+            # Auto-detect OS Type (Ubuntu vs Debian) from ISO file structure
+            detected_os_type = OsType.DEBIAN
+            fn_lower = filename.lower()
+            if "ubuntu" in fn_lower:
+                detected_os_type = OsType.UBUNTU
+
+            try:
+                l_proc = await asyncio.create_subprocess_exec(
+                    "7z", "l", iso_path,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                stdout, _ = await l_proc.communicate()
+                file_list_str = stdout.decode("utf-8", errors="replace").lower()
+                if "casper" in file_list_str or "subiquity" in file_list_str or "ubuntu" in file_list_str or "nocloud" in file_list_str:
+                    detected_os_type = OsType.UBUNTU
+                elif "debian" in file_list_str or "preseed" in file_list_str or "simple-cdd" in file_list_str:
+                    detected_os_type = OsType.DEBIAN
+            except Exception as exc:
+                print(f"OS auto-detect error for {filename}: {exc}")
+
             status = ImageStatus.READY if found_any else ImageStatus.ERROR
             
-            # Update DB
+            # Update DB with status and auto-detected OS type
             await db.execute(
                 update(OsImageModel)
                 .where(OsImageModel.id == image_id)
-                .values(status=status)
+                .values(status=status, os_type=detected_os_type)
             )
             await db.commit()
-            print(f"Extraction completed for {filename} with status {status}")
+            print(f"Extraction completed for {filename} with status {status}, auto-detected OS: {detected_os_type}")
 
         except Exception as e:
             print(f"Failed to extract assets from {filename}: {e}")
