@@ -183,6 +183,7 @@ class UnregisteredDevice(BaseModel):
 async def get_unregistered_devices(db: AsyncSession = Depends(get_db)):
     import os
     import re
+    from datetime import datetime, timedelta
     
     log_path = "/mnt/infra_config/dnsmasq.log"
     if not os.path.exists(log_path):
@@ -197,10 +198,31 @@ async def get_unregistered_devices(db: AsyncSession = Depends(get_db)):
         
     mac_regex = re.compile(r"([0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2})")
     ip_regex = re.compile(r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})")
+    time_regex = re.compile(r"^([A-Z][a-z]{2}\s+\d+\s+\d{2}:\d{2}:\d{2})")
     
+    now = datetime.now()
+    cutoff_time = now - timedelta(minutes=30)
+    
+    def parse_log_time(line_str: str) -> Optional[datetime]:
+        m = time_regex.match(line_str)
+        if not m:
+            return None
+        try:
+            # Replace multiple spaces in day field (e.g. "Jul  5 12:00:00") with single space
+            time_part = re.sub(r"\s+", " ", m.group(1))
+            dt = datetime.strptime(f"{now.year} {time_part}", "%Y %b %d %H:%M:%S")
+            if dt > now + timedelta(days=1):
+                dt = dt.replace(year=now.year - 1)
+            return dt
+        except Exception:
+            return None
+
     # Pre-parse TFTP lines to extract recent client IP addresses
     tftp_ips = []
     for line in reversed(lines):
+        line_dt = parse_log_time(line)
+        if line_dt and line_dt < cutoff_time:
+            break
         if "dnsmasq-tftp" in line and "sent" in line:
             m_ip = ip_regex.search(line)
             if m_ip:
@@ -209,6 +231,9 @@ async def get_unregistered_devices(db: AsyncSession = Depends(get_db)):
     latest_tftp_ip = tftp_ips[0] if tftp_ips else ""
 
     for line in reversed(lines):
+        line_dt = parse_log_time(line)
+        if line_dt and line_dt < cutoff_time:
+            break
         if "dnsmasq-dhcp" in line and ("DHCPDISCOVER" in line or "DHCPREQUEST" in line or "DHCPINFORM" in line or "PXE" in line):
             m_mac = mac_regex.search(line)
             if m_mac:
