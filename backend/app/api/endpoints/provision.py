@@ -157,14 +157,28 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
 
     loc = box.location
 
-    # Define variables for template
     # Check if custom embedded ISO preseed config exists for this image
     iso_preseed_url = ""
+    iso_packages = ""
+    has_simple_cdd = False
+    image_dir_name = "debian-installer"
     if box.os_image:
         image_dir_name = box.os_image.filename.replace(".iso", "").replace(".ISO", "")
         iso_preseed_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "iso_preseed.cfg")
         if os.path.exists(iso_preseed_path):
             iso_preseed_url = f"http://{settings.API_HOST}:{settings.API_PORT}/images/{image_dir_name}/iso_preseed.cfg"
+
+        pkg_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "iso_packages.txt")
+        if os.path.exists(pkg_path):
+            try:
+                with open(pkg_path, "r", errors="replace") as pf:
+                    iso_packages = pf.read().strip()
+            except Exception:
+                pass
+
+        scdd_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "simple-cdd")
+        if os.path.exists(scdd_path):
+            has_simple_cdd = True
 
     context = {
         "request": request,
@@ -182,6 +196,9 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
         "mirror_host": loc.package_mirror if loc and loc.package_mirror else default_mirror,
         "mirror_proxy": default_mirror_proxy,
         "iso_preseed_url": iso_preseed_url,
+        "iso_packages": iso_packages,
+        "has_simple_cdd": has_simple_cdd,
+        "image_dir_name": image_dir_name,
         "ssh_public_key": loc.ssh_public_key if loc and loc.ssh_public_key else default_ssh_key,
         "root_password_hash": default_root_pwd_hash,
         "create_default_user": bool(default_username),

@@ -107,6 +107,39 @@ async def sync_iso_preseeds():
                         out_pf.write(combined_content)
                     print(f"[Startup] Extracted embedded ISO preseed config for {fname} -> {iso_preseed_file}")
 
+            # Extract simple-cdd tree and package lists on startup if not present
+            scdd_target = os.path.join(target_dir, "simple-cdd")
+            if not os.path.exists(scdd_target):
+                try:
+                    scdd_proc = await asyncio.create_subprocess_exec(
+                        "7z", "x", iso_path, "simple-cdd/*", "-y", f"-o{target_dir}",
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE
+                    )
+                    await scdd_proc.communicate()
+                except Exception:
+                    pass
+
+            pkg_target = os.path.join(target_dir, "iso_packages.txt")
+            if not os.path.exists(pkg_target):
+                collected_packages = set()
+                for sdir in [target_dir, scdd_target]:
+                    if os.path.exists(sdir):
+                        for pf in os.listdir(sdir):
+                            if pf.endswith(".packages"):
+                                try:
+                                    with open(os.path.join(sdir, pf), "r", errors="replace") as f:
+                                        for line in f:
+                                            line = line.strip()
+                                            if line and not line.startswith("#"):
+                                                collected_packages.add(line)
+                                except Exception:
+                                    pass
+                if collected_packages:
+                    with open(pkg_target, "w") as pkg_out:
+                        pkg_out.write(" ".join(sorted(collected_packages)))
+                    print(f"[Startup] Extracted ISO package list ({len(collected_packages)} packages) for {fname}")
+
 @app.on_event("startup")
 async def startup_event():
     import asyncio

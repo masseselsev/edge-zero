@@ -144,6 +144,36 @@ async def _extract_iso_assets(iso_path: str, image_id: UUID, filename: str):
                     out_pf.write(combined_content)
                 print(f"Extracted embedded ISO preseed config to {image_dir_name}/iso_preseed.cfg")
 
+            # 3. Extract simple-cdd directory and collect extra package lists
+            try:
+                scdd_proc = await asyncio.create_subprocess_exec(
+                    "7z", "x", iso_path, "simple-cdd/*", "-y", f"-o{target_dir}",
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                await scdd_proc.communicate()
+            except Exception as e:
+                print(f"Subprocess 7z simple-cdd extraction error: {e}")
+
+            collected_packages = set()
+            search_dirs = [target_dir, os.path.join(target_dir, "simple-cdd")]
+            for sdir in search_dirs:
+                if os.path.exists(sdir):
+                    for pf in os.listdir(sdir):
+                        if pf.endswith(".packages"):
+                            try:
+                                with open(os.path.join(sdir, pf), "r", errors="replace") as f:
+                                    for line in f:
+                                        line = line.strip()
+                                        if line and not line.startswith("#"):
+                                            collected_packages.add(line)
+                            except Exception:
+                                pass
+            if collected_packages:
+                with open(os.path.join(target_dir, "iso_packages.txt"), "w") as pkg_out:
+                    pkg_out.write(" ".join(sorted(collected_packages)))
+                print(f"Extracted ISO package list ({len(collected_packages)} packages) to {image_dir_name}/iso_packages.txt")
+
             status = ImageStatus.READY if found_any else ImageStatus.ERROR
             
             # Update DB with status and auto-detected OS type
