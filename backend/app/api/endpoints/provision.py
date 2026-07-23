@@ -528,15 +528,15 @@ async def get_boot_ipxe(mac: str, db: AsyncSession = Depends(get_db)):
     if box.status == BoxStatus.INSTALLING:
         preseed_url = f"http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{mac}/preseed.cfg"
         
-        # Determine image directory from os_image filename or pick first available image
+        # Determine image directory from os_image filename or pick first available custom image
         image_dir = "debian-installer"
         if box.os_image:
             image_dir = box.os_image.filename.replace(".iso", "").replace(".ISO", "")
         
         base_img_path = "/mnt/infra_config/tftp/images"
         img_path = os.path.join(base_img_path, image_dir)
-        if not os.path.exists(img_path) and os.path.exists(base_img_path):
-            available_dirs = [d for d in os.listdir(base_img_path) if os.path.isdir(os.path.join(base_img_path, d))]
+        if (not os.path.exists(img_path) or image_dir == "debian-installer") and os.path.exists(base_img_path):
+            available_dirs = [d for d in os.listdir(base_img_path) if d != "debian-installer" and os.path.isdir(os.path.join(base_img_path, d))]
             if available_dirs:
                 image_dir = available_dirs[0]
                 img_path = os.path.join(base_img_path, image_dir)

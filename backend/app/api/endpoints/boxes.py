@@ -564,13 +564,20 @@ async def batch_provision(
     affected_boxes = result_boxes.scalars().all()
     affected_details = [f"SN:{b.internal_sn} (MAC:{b.mac_address})" for b in affected_boxes]
 
-    # Update status to INSTALLING for all selected boxes
-    stmt = (
-        update(BoxModel)
-        .where(BoxModel.id.in_(box_ids))
-        .values(status=BoxStatus.INSTALLING)
+    # Auto-assign latest ready OsImage to boxes without os_image_id
+    from app.models.os_image import OsImage as OsImageModel, ImageStatus
+    res_img = await db.execute(
+        select(OsImageModel)
+        .where(OsImageModel.status == ImageStatus.READY)
+        .order_by(OsImageModel.created_at.desc())
     )
-    await db.execute(stmt)
+    latest_img = res_img.scalars().first()
+
+    for b in affected_boxes:
+        b.status = BoxStatus.INSTALLING
+        if not b.os_image_id and latest_img:
+            b.os_image_id = latest_img.id
+    
     await db.commit()
     
     # Regenerate PXE configs
