@@ -562,7 +562,7 @@ async def get_boot_ipxe(mac: str, db: AsyncSession = Depends(get_db)):
 
         script = f"""#!ipxe
 echo Starting Edge-Z.E.R.O. Network Installer for MAC {mac}
-echo Using image: {image_dir}
+echo Using image: {netboot_dir}
 kernel {kernel} {cmdline}
 initrd {initrd}
 boot
