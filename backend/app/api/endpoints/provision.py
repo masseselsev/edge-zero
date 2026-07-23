@@ -15,6 +15,7 @@ from app.models.system_settings import SystemSettings
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+INFRA_CONFIG_DIR = "/mnt/infra_config"
 
 from app.services.pxe_gen import generate_pxe_config
 from pydantic import BaseModel
