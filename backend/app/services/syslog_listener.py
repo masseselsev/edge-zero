@@ -56,20 +56,23 @@ class _SyslogProtocol(asyncio.DatagramProtocol):
 
         try:
             async with AsyncSessionLocal() as db:
+                # 1. Try matching box by IP address
                 res = await db.execute(
                     select(Box).where(Box.ip_address == cast(source_ip, INET))
                 )
                 box = res.scalars().first()
+
+                # 2. Fallback: match box in INSTALLING, STAGING, or NEW status
                 if not box:
-                    # Fallback: match box currently in INSTALLING status
                     res_inst = await db.execute(
-                        select(Box).where(Box.status == BoxStatus.INSTALLING)
+                        select(Box).where(Box.status.in_([BoxStatus.INSTALLING, BoxStatus.STAGING, BoxStatus.NEW]))
                     )
                     box = res_inst.scalars().first()
-                    if box and not box.ip_address:
+                    if box:
                         box.ip_address = source_ip
 
                 if box:
+                    # Update progress if message hints at installer steps
                     db.add(ProvisioningLog(
                         box_id=box.id,
                         message=f"[d-i] {message}"
