@@ -93,6 +93,16 @@ async def sync_iso_preseeds():
                         await p_proc.communicate()
                     except Exception:
                         pass
+                forbidden_prefixes = (
+                    "d-i netcfg/",
+                    "netcfg/",
+                    "d-i preseed/early_command",
+                    "preseed/early_command",
+                    "d-i preseed/late_command",
+                    "preseed/late_command",
+                    "d-i apt-setup/no_mirror",
+                    "d-i apt-setup/cdrom/",
+                )
                 combined_content = ""
                 for ext_name in os.listdir(target_dir):
                     if (ext_name.endswith(".preseed") or ext_name == "preseed.cfg") and ext_name != "iso_preseed.cfg":
@@ -104,7 +114,7 @@ async def sync_iso_preseeds():
                                 skip_multiline = False
                                 for line in content.splitlines():
                                     stripped = line.strip()
-                                    if "preseed/late_command" in line or skip_multiline:
+                                    if any(stripped.startswith(p) for p in forbidden_prefixes) or skip_multiline:
                                         cleaned_lines.append(f"# [Netboot Overridden] {line}")
                                         skip_multiline = stripped.endswith("\\")
                                     else:

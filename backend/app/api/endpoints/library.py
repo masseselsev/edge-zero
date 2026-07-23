@@ -129,6 +129,16 @@ async def _extract_iso_assets(iso_path: str, image_id: UUID, filename: str):
                 print(f"Subprocess 7z extraction error: {e}")
 
             # Combine extracted preseed directives into target_dir/iso_preseed.cfg
+            forbidden_prefixes = (
+                "d-i netcfg/",
+                "netcfg/",
+                "d-i preseed/early_command",
+                "preseed/early_command",
+                "d-i preseed/late_command",
+                "preseed/late_command",
+                "d-i apt-setup/no_mirror",
+                "d-i apt-setup/cdrom/",
+            )
             combined_content = ""
             for fname in os.listdir(target_dir):
                 if (fname.endswith(".preseed") or fname == "preseed.cfg") and fname != "iso_preseed.cfg":
@@ -140,7 +150,7 @@ async def _extract_iso_assets(iso_path: str, image_id: UUID, filename: str):
                             skip_multiline = False
                             for line in content.splitlines():
                                 stripped = line.strip()
-                                if "preseed/late_command" in line or skip_multiline:
+                                if any(stripped.startswith(p) for p in forbidden_prefixes) or skip_multiline:
                                     cleaned_lines.append(f"# [Netboot Overridden] {line}")
                                     skip_multiline = stripped.endswith("\\")
                                 else:
