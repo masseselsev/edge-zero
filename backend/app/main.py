@@ -95,11 +95,18 @@ async def sync_iso_preseeds():
                         pass
                 combined_content = ""
                 for ext_name in os.listdir(target_dir):
-                    if (ext_name.endswith(".preseed") or (ext_name.endswith(".cfg") and ext_name != "iso_preseed.cfg")) and ext_name not in ["vmlinuz", "initrd.gz"]:
+                    if (ext_name.endswith(".preseed") or ext_name == "preseed.cfg") and ext_name != "iso_preseed.cfg":
                         fpath = os.path.join(target_dir, ext_name)
                         try:
                             with open(fpath, "r", errors="replace") as pf:
-                                combined_content += f"\n# --- Extracted from ISO: {ext_name} ---\n" + pf.read() + "\n"
+                                content = pf.read()
+                                cleaned_lines = []
+                                for line in content.splitlines():
+                                    if "preseed/late_command" in line and "/cdrom/" in line:
+                                        cleaned_lines.append(f"# [Netboot Overridden] {line}")
+                                    else:
+                                        cleaned_lines.append(line)
+                                combined_content += f"\n# --- Extracted from ISO: {ext_name} ---\n" + "\n".join(cleaned_lines) + "\n"
                         except Exception:
                             pass
                 if combined_content.strip():

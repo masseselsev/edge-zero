@@ -131,11 +131,18 @@ async def _extract_iso_assets(iso_path: str, image_id: UUID, filename: str):
             # Combine extracted preseed directives into target_dir/iso_preseed.cfg
             combined_content = ""
             for fname in os.listdir(target_dir):
-                if (fname.endswith(".preseed") or (fname.endswith(".cfg") and fname != "iso_preseed.cfg")) and fname not in ["vmlinuz", "initrd.gz"]:
+                if (fname.endswith(".preseed") or fname == "preseed.cfg") and fname != "iso_preseed.cfg":
                     fpath = os.path.join(target_dir, fname)
                     try:
                         with open(fpath, "r", errors="replace") as pf:
-                            combined_content += f"\n# --- Extracted from ISO: {fname} ---\n" + pf.read() + "\n"
+                            content = pf.read()
+                            cleaned_lines = []
+                            for line in content.splitlines():
+                                if "preseed/late_command" in line and "/cdrom/" in line:
+                                    cleaned_lines.append(f"# [Netboot Overridden] {line}")
+                                else:
+                                    cleaned_lines.append(line)
+                            combined_content += f"\n# --- Extracted from ISO: {fname} ---\n" + "\n".join(cleaned_lines) + "\n"
                     except Exception:
                         pass
             
