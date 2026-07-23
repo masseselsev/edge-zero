@@ -93,54 +93,7 @@ async def _extract_iso_assets(iso_path: str, image_id: UUID, filename: str):
             target_dir = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name)
             os.makedirs(target_dir, exist_ok=True)
             
-            patterns = ["vmlinuz*", "initrd*", "linux", "initrd.img"]
-            found_any = False
-            
-            for pattern in patterns:
-                try:
-                    # Use asyncio subprocess to avoid blocking the event loop
-                    process = await asyncio.create_subprocess_exec(
-                        "7z", "e", iso_path, pattern, "-r", "-y", f"-o{target_dir}",
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE
-                    )
-                    await process.communicate()
-                    if process.returncode == 0:
-                        found_any = True
-                except Exception as e:
-                    print(f"Subprocess error for pattern {pattern}: {e}")
-                    continue
-
-            # Extract embedded preseed / configuration files from ISO
-            preseed_patterns = ["preseed.cfg", "*.preseed", "simple-cdd/*.preseed", "isolinux/*.cfg", "txt.cfg"]
-            for p_pattern in preseed_patterns:
-                try:
-                    p_proc = await asyncio.create_subprocess_exec(
-                        "7z", "e", iso_path, p_pattern, "-r", "-y", f"-o{target_dir}",
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE
-                    )
-                    await p_proc.communicate()
-                except Exception:
-                    pass
-
-            # Combine extracted preseed directives into target_dir/iso_preseed.cfg
-            combined_content = ""
-            for fname in os.listdir(target_dir):
-                if (fname.endswith(".preseed") or (fname.endswith(".cfg") and fname != "iso_preseed.cfg")) and fname not in ["vmlinuz", "initrd.gz"]:
-                    fpath = os.path.join(target_dir, fname)
-                    try:
-                        with open(fpath, "r", errors="replace") as pf:
-                            combined_content += f"\n# --- Extracted from ISO: {fname} ---\n" + pf.read() + "\n"
-                    except Exception:
-                        pass
-            
-            if combined_content.strip():
-                with open(os.path.join(target_dir, "iso_preseed.cfg"), "w") as out_pf:
-                    out_pf.write(combined_content)
-                print(f"Extracted embedded ISO preseed config to {image_dir_name}/iso_preseed.cfg")
-
-            # Auto-detect OS Type (Ubuntu vs Debian) from ISO file structure
+            # 1. Fast single-pass listing of ISO contents to auto-detect OS Type
             detected_os_type = OsType.DEBIAN
             fn_lower = filename.lower()
             if "ubuntu" in fn_lower:
@@ -160,6 +113,36 @@ async def _extract_iso_assets(iso_path: str, image_id: UUID, filename: str):
                     detected_os_type = OsType.DEBIAN
             except Exception as exc:
                 print(f"OS auto-detect error for {filename}: {exc}")
+
+            # 2. Extract kernel, initrd, and preseed files in ONE single 7z pass (takes 2-4s)
+            found_any = False
+            try:
+                process = await asyncio.create_subprocess_exec(
+                    "7z", "e", iso_path, "vmlinuz*", "initrd*", "linux", "initrd.img", "preseed.cfg", "*.preseed", "isolinux.cfg", "txt.cfg", "-r", "-y", f"-o{target_dir}",
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                await process.communicate()
+                if process.returncode == 0 or os.path.exists(os.path.join(target_dir, "vmlinuz")) or os.path.exists(os.path.join(target_dir, "initrd.gz")):
+                    found_any = True
+            except Exception as e:
+                print(f"Subprocess 7z extraction error: {e}")
+
+            # Combine extracted preseed directives into target_dir/iso_preseed.cfg
+            combined_content = ""
+            for fname in os.listdir(target_dir):
+                if (fname.endswith(".preseed") or (fname.endswith(".cfg") and fname != "iso_preseed.cfg")) and fname not in ["vmlinuz", "initrd.gz"]:
+                    fpath = os.path.join(target_dir, fname)
+                    try:
+                        with open(fpath, "r", errors="replace") as pf:
+                            combined_content += f"\n# --- Extracted from ISO: {fname} ---\n" + pf.read() + "\n"
+                    except Exception:
+                        pass
+            
+            if combined_content.strip():
+                with open(os.path.join(target_dir, "iso_preseed.cfg"), "w") as out_pf:
+                    out_pf.write(combined_content)
+                print(f"Extracted embedded ISO preseed config to {image_dir_name}/iso_preseed.cfg")
 
             status = ImageStatus.READY if found_any else ImageStatus.ERROR
             
