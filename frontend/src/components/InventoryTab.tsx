@@ -417,10 +417,11 @@ export default function InventoryTab() {
                   type="text"
                   required
                   value={newBox.internal_sn}
-                  onChange={(e) => setNewBox({...newBox, internal_sn: e.target.value})}
+                  onChange={(e) => setNewBox({...newBox, internal_sn: e.target.value.replace(/[^\x00-\x7F]/g, '')})}
                   className="w-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 p-2.5 rounded-lg focus:border-indigo-500 outline-none"
                   placeholder="e.g. BOX-001"
                 />
+                <p className="text-[10px] text-zinc-500 mt-1">Latin characters, numbers, and hyphens only</p>
               </div>
 
               <div>

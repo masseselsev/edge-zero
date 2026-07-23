@@ -554,10 +554,11 @@ boot
 """
         return Response(content=script, media_type="text/plain")
     elif box.status in [BoxStatus.NEW, BoxStatus.STAGING]:
+        clean_sn = box.internal_sn.encode('ascii', 'ignore').decode('ascii') if box.internal_sn else ""
         script = [
             "#!ipxe",
             "echo =============================================================",
-            f"echo REGISTERED DEVICE: {box.internal_sn} ({mac.upper()})",
+            f"echo REGISTERED DEVICE: {clean_sn} ({mac.upper()})",
             f"echo Status: {box.status.value}",
             "echo Waiting for 'Install' command from dashboard...",
             "echo =============================================================",

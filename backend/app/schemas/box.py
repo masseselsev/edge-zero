@@ -27,6 +27,13 @@ class BoxBase(BaseModel):
     ssh_username: str = "user"
     ssh_password: str = "admin"
 
+    @field_validator('internal_sn')
+    @classmethod
+    def validate_ascii_sn(cls, v: str) -> str:
+        if v and not v.isascii():
+            raise ValueError("Device name must contain ASCII characters only (English letters, numbers, hyphens, underscores). Cyrillic is not supported in boot consoles.")
+        return v
+
     @field_validator('location_id', 'os_image_id', mode='before')
     @classmethod
     def empty_string_to_none(cls, v: Any) -> Any:
@@ -56,6 +63,13 @@ class BoxUpdate(BaseModel):
     ssh_port: Optional[int] = None
     ssh_username: Optional[str] = None
     ssh_password: Optional[str] = None
+
+    @field_validator('internal_sn')
+    @classmethod
+    def validate_ascii_sn(cls, v: Optional[str]) -> Optional[str]:
+        if v and not v.isascii():
+            raise ValueError("Device name must contain ASCII characters only (English letters, numbers, hyphens, underscores). Cyrillic is not supported in boot consoles.")
+        return v
 
     @field_validator('location_id', 'os_image_id', mode='before')
     @classmethod
