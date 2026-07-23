@@ -284,7 +284,6 @@ export default function LibraryTab({ initialSubTab = 'images' }: LibraryTabProps
               <div>
                 <label className="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Select ISO File</label>
                 <input
-                  key={uploadFile ? 'loaded' : 'empty'}
                   type="file"
                   required
                   accept=".iso,.ISO"
