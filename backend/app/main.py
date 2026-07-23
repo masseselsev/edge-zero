@@ -100,6 +100,8 @@ async def sync_iso_preseeds():
                     "preseed/early_command",
                     "d-i preseed/late_command",
                     "preseed/late_command",
+                    "d-i partman/early_command",
+                    "partman/early_command",
                     "d-i apt-setup/no_mirror",
                     "d-i apt-setup/cdrom/",
                 )

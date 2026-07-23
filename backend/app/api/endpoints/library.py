@@ -136,6 +136,8 @@ async def _extract_iso_assets(iso_path: str, image_id: UUID, filename: str):
                 "preseed/early_command",
                 "d-i preseed/late_command",
                 "preseed/late_command",
+                "d-i partman/early_command",
+                "partman/early_command",
                 "d-i apt-setup/no_mirror",
                 "d-i apt-setup/cdrom/",
             )
