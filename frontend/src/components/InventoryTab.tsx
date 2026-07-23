@@ -379,6 +379,17 @@ export default function InventoryTab() {
         </table>
       </div>
 
+      {/* Fleet Footer Note */}
+      <div className="mt-4 flex items-center justify-between text-[11px] text-zinc-500 px-2 py-2 border-t border-zinc-850">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block animate-pulse"></span>
+          <span>Unregistered device auto-discovery scans DHCP/PXE activity within the last 10 minutes.</span>
+        </div>
+        <div className="text-zinc-600 font-mono">
+          Edge-Z.E.R.O. Provisioning Engine
+        </div>
+      </div>
+
       {/* Add Box Modal */}
       {showAddModal && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">

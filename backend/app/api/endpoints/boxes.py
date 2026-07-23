@@ -201,7 +201,7 @@ async def get_unregistered_devices(db: AsyncSession = Depends(get_db)):
     time_regex = re.compile(r"^([A-Z][a-z]{2}\s+\d+\s+\d{2}:\d{2}:\d{2})")
     
     now = datetime.now()
-    cutoff_time = now - timedelta(minutes=30)
+    cutoff_time = now - timedelta(minutes=10)
     
     def parse_log_time(line_str: str) -> Optional[datetime]:
         m = time_regex.match(line_str)
