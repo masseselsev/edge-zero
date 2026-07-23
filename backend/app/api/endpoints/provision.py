@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, cast, MACADDR
+from sqlalchemy.orm import joinedload, selectinload
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import Response
 
