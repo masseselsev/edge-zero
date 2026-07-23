@@ -77,6 +77,15 @@ export default function LibraryTab({ initialSubTab = 'images' }: LibraryTabProps
     fetchData();
   }, []);
 
+  // Automatically poll every 2.5 seconds while any image is being processed
+  useEffect(() => {
+    const hasProcessing = images.some(img => img.status === 'PROCESSING');
+    if (!hasProcessing) return;
+
+    const interval = setInterval(fetchData, 2500);
+    return () => clearInterval(interval);
+  }, [images]);
+
   // Upload ISO
   const handleUploadIso = (e: React.FormEvent) => {
     e.preventDefault();
