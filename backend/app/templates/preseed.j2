@@ -18,6 +18,7 @@ d-i netcfg/confirm_static boolean true
 d-i mirror/country string manual
 d-i mirror/http/hostname string {{ mirror_host | default('deb.debian.org') }}
 d-i mirror/http/directory string /debian
+d-i mirror/http/proxy string {{ mirror_proxy | default('http://' ~ api_host ~ ':3142/') }}
 
 # Account setup
 d-i passwd/root-login boolean true

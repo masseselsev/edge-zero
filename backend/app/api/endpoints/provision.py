@@ -139,6 +139,7 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
     default_locale = await get_system_setting(db, "DEFAULT_LOCALE", "en_US.UTF-8")
     default_keyboard = await get_system_setting(db, "DEFAULT_KEYBOARD", "us")
     default_mirror = await get_system_setting(db, "DEFAULT_PACKAGE_MIRROR", "deb.debian.org")
+    default_mirror_proxy = await get_system_setting(db, "DEFAULT_PACKAGE_MIRROR_PROXY", f"http://{settings.API_HOST}:3142/")
     default_root_pwd_hash = await get_system_setting(db, "DEFAULT_ROOT_PASSWORD_HASH", "$6$rounds=4096$salt$placeholder")
     default_username = await get_system_setting(db, "DEFAULT_USER_USERNAME", "")
     default_fullname = await get_system_setting(db, "DEFAULT_USER_FULLNAME", "Default User")
@@ -161,6 +162,7 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
         "locale": loc.locale if loc and loc.locale else default_locale,
         "keyboard": loc.keyboard if loc and loc.keyboard else default_keyboard,
         "mirror_host": loc.package_mirror if loc and loc.package_mirror else default_mirror,
+        "mirror_proxy": default_mirror_proxy,
         "ssh_public_key": loc.ssh_public_key if loc and loc.ssh_public_key else default_ssh_key,
         "root_password_hash": default_root_pwd_hash,
         "create_default_user": bool(default_username),
