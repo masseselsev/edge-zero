@@ -263,6 +263,7 @@ export default function LibraryTab({ initialSubTab = 'images' }: LibraryTabProps
                   ) : (
                     images.map(img => (
                       <tr key={img.id} className="hover:bg-zinc-800/30 text-zinc-300 transition-colors">
+                        <td className="px-6 py-4 font-bold text-zinc-200">{img.filename}</td>
                         <td className="px-6 py-4">
                           {img.status === 'PROCESSING' ? (
                             <span className="text-zinc-400 italic text-[11px] flex items-center gap-1.5 font-mono">
