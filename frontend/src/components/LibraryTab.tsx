@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../context/TranslationContext';
-import { Upload, Plus, Trash2, Library, Disc, Layers, FileCode } from 'lucide-react';
+import { Upload, Plus, Trash2, Library, Disc, Layers, FileCode, Loader2 } from 'lucide-react';
 import InitScriptsTab from './InitScriptsTab';
 
 interface OsImage {
@@ -254,11 +254,19 @@ export default function LibraryTab({ initialSubTab = 'images' }: LibraryTabProps
                   ) : (
                     images.map(img => (
                       <tr key={img.id} className="hover:bg-zinc-800/30 text-zinc-300 transition-colors">
-                        <td className="px-6 py-4 font-bold text-zinc-200">{img.filename}</td>
-                        <td className="px-6 py-4">{img.os_type}</td>
+                        <td className="px-6 py-4">
+                          {img.status === 'PROCESSING' ? (
+                            <span className="text-zinc-400 italic text-[11px] flex items-center gap-1.5 font-mono">
+                              <Loader2 size={12} className="animate-spin text-indigo-400 shrink-0" />
+                              <span>Detecting...</span>
+                            </span>
+                          ) : (
+                            <span className="font-semibold text-zinc-300">{img.os_type}</span>
+                          )}
+                        </td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
-                            img.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+                            img.status === 'READY' || img.status === 'SUCCESS' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
                           }`}>{img.status}</span>
                         </td>
                         <td className="px-6 py-4 text-right">
