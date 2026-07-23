@@ -4,7 +4,7 @@ from sqlalchemy import select, cast
 from sqlalchemy.dialects.postgresql import MACADDR
 from sqlalchemy.orm import joinedload, selectinload
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import Response
+from fastapi.responses import Response, FileResponse
 
 from app.core.config import settings
 from app.db.session import get_db
@@ -174,7 +174,7 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
 
     iso_preseed_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "iso_preseed.cfg")
     if os.path.exists(iso_preseed_path):
-        iso_preseed_url = f"http://{settings.API_HOST}:{settings.API_PORT}/images/{image_dir_name}/iso_preseed.cfg"
+        iso_preseed_url = f"http://{settings.API_HOST}:{settings.API_PORT}/api/provision/{mac}/iso_preseed.cfg"
 
     pkg_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "iso_packages.txt")
     if os.path.exists(pkg_path):
@@ -229,6 +229,61 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
         context,
         media_type="text/plain"
     )
+
+@router.get("/{mac}/iso_preseed.cfg")
+async def get_box_iso_preseed(mac: str, db: AsyncSession = Depends(get_db)):
+    mac_clean = clean_mac(mac)
+    result = await db.execute(
+        select(Box)
+        .options(selectinload(Box.os_image))
+        .where(Box.mac_address == cast(mac_clean, MACADDR))
+    )
+    box = result.scalars().first()
+    if not box:
+        raise HTTPException(status_code=404, detail="Box not found")
+
+    image_dir_name = "debian-installer"
+    if box.os_image:
+        image_dir_name = box.os_image.filename.replace(".iso", "").replace(".ISO", "")
+    else:
+        base_img_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images")
+        if os.path.exists(base_img_path):
+            available = [d for d in os.listdir(base_img_path) if d != "debian-installer" and os.path.isdir(os.path.join(base_img_path, d))]
+            if available:
+                image_dir_name = available[0]
+
+    iso_preseed_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "iso_preseed.cfg")
+    if os.path.exists(iso_preseed_path):
+        return FileResponse(iso_preseed_path, media_type="text/plain")
+    return Response(content="", media_type="text/plain")
+
+
+@router.get("/{mac}/simple-cdd/{filename}")
+async def get_box_simple_cdd_asset(mac: str, filename: str, db: AsyncSession = Depends(get_db)):
+    mac_clean = clean_mac(mac)
+    result = await db.execute(
+        select(Box)
+        .options(selectinload(Box.os_image))
+        .where(Box.mac_address == cast(mac_clean, MACADDR))
+    )
+    box = result.scalars().first()
+    if not box:
+        raise HTTPException(status_code=404, detail="Box not found")
+
+    image_dir_name = "debian-installer"
+    if box.os_image:
+        image_dir_name = box.os_image.filename.replace(".iso", "").replace(".ISO", "")
+    else:
+        base_img_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images")
+        if os.path.exists(base_img_path):
+            available = [d for d in os.listdir(base_img_path) if d != "debian-installer" and os.path.isdir(os.path.join(base_img_path, d))]
+            if available:
+                image_dir_name = available[0]
+
+    asset_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "simple-cdd", filename)
+    if os.path.exists(asset_path):
+        return FileResponse(asset_path)
+    raise HTTPException(status_code=404, detail="Asset not found")
 
 @router.get("/{mac}/user-data")
 async def get_user_data(mac: str, request: Request, db: AsyncSession = Depends(get_db)):

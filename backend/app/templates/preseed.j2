@@ -66,9 +66,9 @@ d-i grub-installer/bootdev string default
 d-i preseed/late_command string \
     in-target /bin/sh -c "curl -sf -X POST http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/report -H 'Content-Type: application/json' -d '{\"message\":\"[Debian] late_command started — OS base installed\",\"progress\":60}' || true"; \
 {% if has_simple_cdd %}
-    in-target /bin/sh -c "wget -q http://{{ api_host }}:{{ api_port }}/images/{{ image_dir_name }}/simple-cdd/edge-archive-keyring.asc -O /target/etc/apt/trusted.gpg.d/edge.asc || true"; \
-    in-target /bin/sh -c "mkdir -p /target/opt/edge/bin && wget -q http://{{ api_host }}:{{ api_port }}/images/{{ image_dir_name }}/simple-cdd/edge-base.firstboot.sh -O /target/opt/edge/bin/firstboot.sh && chmod 755 /target/opt/edge/bin/firstboot.sh || true"; \
-    in-target /bin/sh -c "mkdir -p /target/etc/systemd/system && wget -q http://{{ api_host }}:{{ api_port }}/images/{{ image_dir_name }}/simple-cdd/edge-base.firstboot.service -O /target/etc/systemd/system/edge-firstboot.service && chmod 644 /target/etc/systemd/system/edge-firstboot.service || true"; \
+    in-target /bin/sh -c "wget -q http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/simple-cdd/edge-archive-keyring.asc -O /target/etc/apt/trusted.gpg.d/edge.asc || true"; \
+    in-target /bin/sh -c "mkdir -p /target/opt/edge/bin && wget -q http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/simple-cdd/edge-base.firstboot.sh -O /target/opt/edge/bin/firstboot.sh && chmod 755 /target/opt/edge/bin/firstboot.sh || true"; \
+    in-target /bin/sh -c "mkdir -p /target/etc/systemd/system && wget -q http://{{ api_host }}:{{ api_port }}/api/provision/{{ mac_address }}/simple-cdd/edge-base.firstboot.service -O /target/etc/systemd/system/edge-firstboot.service && chmod 644 /target/etc/systemd/system/edge-firstboot.service || true"; \
     in-target /bin/sh -c "systemctl --root=/target enable edge-firstboot.service || true"; \
     in-target /bin/sh -c "rm -f /target/etc/machine-id || true"; \
 {% endif %}

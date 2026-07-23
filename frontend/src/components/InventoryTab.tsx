@@ -134,17 +134,30 @@ export default function InventoryTab() {
   const handleAddBox = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload: Record<string, any> = { ...newBox };
+      if (!payload.location_id) delete payload.location_id;
+      if (!payload.template_id) delete payload.template_id;
+      if (!payload.ip_address) delete payload.ip_address;
+
       const res = await fetch('/api/boxes/', {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify(newBox)
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         handleCloseAddModal();
         fetchData();
       } else {
         const errorData = await res.json().catch(() => ({}));
-        alert(`Failed to add box: ${errorData.detail || 'Unknown error'}`);
+        let msg = 'Unknown error';
+        if (typeof errorData.detail === 'string') {
+          msg = errorData.detail;
+        } else if (Array.isArray(errorData.detail)) {
+          msg = errorData.detail.map((d: any) => `${d.loc ? d.loc.join('.') : ''}: ${d.msg}`).join('\n');
+        } else if (errorData.detail && typeof errorData.detail === 'object') {
+          msg = JSON.stringify(errorData.detail);
+        }
+        alert(`Failed to add box: ${msg}`);
       }
     } catch (err) {
       console.error('Failed to add box:', err);
