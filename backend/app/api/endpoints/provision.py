@@ -164,21 +164,28 @@ async def get_preseed(mac: str, request: Request, db: AsyncSession = Depends(get
     image_dir_name = "debian-installer"
     if box.os_image:
         image_dir_name = box.os_image.filename.replace(".iso", "").replace(".ISO", "")
-        iso_preseed_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "iso_preseed.cfg")
-        if os.path.exists(iso_preseed_path):
-            iso_preseed_url = f"http://{settings.API_HOST}:{settings.API_PORT}/images/{image_dir_name}/iso_preseed.cfg"
+    else:
+        base_img_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images")
+        if os.path.exists(base_img_path):
+            available = [d for d in os.listdir(base_img_path) if d != "debian-installer" and os.path.isdir(os.path.join(base_img_path, d))]
+            if available:
+                image_dir_name = available[0]
 
-        pkg_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "iso_packages.txt")
-        if os.path.exists(pkg_path):
-            try:
-                with open(pkg_path, "r", errors="replace") as pf:
-                    iso_packages = pf.read().strip()
-            except Exception:
-                pass
+    iso_preseed_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "iso_preseed.cfg")
+    if os.path.exists(iso_preseed_path):
+        iso_preseed_url = f"http://{settings.API_HOST}:{settings.API_PORT}/images/{image_dir_name}/iso_preseed.cfg"
 
-        scdd_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "simple-cdd")
-        if os.path.exists(scdd_path):
-            has_simple_cdd = True
+    pkg_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "iso_packages.txt")
+    if os.path.exists(pkg_path):
+        try:
+            with open(pkg_path, "r", errors="replace") as pf:
+                iso_packages = pf.read().strip()
+        except Exception:
+            pass
+
+    scdd_path = os.path.join(INFRA_CONFIG_DIR, "tftp", "images", image_dir_name, "simple-cdd")
+    if os.path.exists(scdd_path):
+        has_simple_cdd = True
 
     context = {
         "request": request,
