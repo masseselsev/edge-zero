@@ -14,10 +14,10 @@
 ## 🌟 Key Features
 
 ### ⚡ Zero-Touch PXE Provisioning & Auto-Discovery
-* **Universal High-Speed Auto-Boot:** `dnsmasq` serves `ipxe.efi` and `undionly.kpxe` bootloaders via DHCP/TFTP, while kernel (`vmlinuz`) and ramdisk (`initrd.gz`) delivery streams over **1 Gbps HTTP** (TCP) for sub-second loading.
+* **Universal High-Speed Auto-Boot:** `dnsmasq` serves `ipxe.efi` and `undionly.kpxe` bootloaders via DHCP/TFTP, while kernel (`vmlinuz`) and ramdisk (`initrd.gz`) delivery streams over **full line-rate HTTP** (TCP) for sub-second loading.
 * **10-Minute Time-Bounded Auto-Discovery:** Real-time DHCP log parser and iPXE loop handler automatically discover new hardware within a 10-minute sliding window, ignoring inactive or powered-off historical devices.
 * **ProxyDHCP Mode:** Operates seamlessly alongside existing network routers (MikroTik, Cisco, etc.) without DHCP pool conflicts.
-* **Dynamic Templates & Local Apt Caching:** On-the-fly generation of `preseed.cfg` (Debian) and `user-data` (Ubuntu Subiquity) routed through an embedded local Apt caching proxy (`port 3142`) for gigabit package installation speeds.
+* **Dynamic Templates & Local Apt Caching:** On-the-fly generation of `preseed.cfg` (Debian) and `user-data` (Ubuntu Subiquity) routed through an embedded local Apt caching proxy (`port 3142`) for maximum link-speed package installation.
 
 ### 🖥️ Location Profiles & Visual OS Configurator (Profiles)
 * **Location Profiles:** Bind devices to physical geographic locations with specific network and regional presets.
